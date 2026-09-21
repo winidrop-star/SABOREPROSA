@@ -5,7 +5,7 @@ const CHAVES = ['loja', 'cardapioDia', 'categorias', 'cupons'];
 // Estado padrão usado só se o Supabase ainda não tiver sido semeado
 // (rode supabase/schema.sql no seu projeto para não cair nesse caso).
 const FALLBACK = {
-  loja: { aberta: true, forcarAberta: false, whatsapp: '' },
+  loja: { modo: 'auto', horarioAbre: '10:30', horarioFecha: '13:30', whatsapp: '' },
   cardapioDia: { proteina1: '', proteina2: '', feijaoOpcoes: [], adicionaisOpcoes: [] },
   cupons: [],
   categorias: []

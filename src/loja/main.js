@@ -190,28 +190,40 @@ function addConfiguredToCart(catId, itemId, variantLabel, name, basePrice, varia
   renderCartBar();
 }
 
-/* ---------------- horário de funcionamento (10:30 às 13:30) ---------------- */
-const HORARIO_ABRE_MIN = 10 * 60 + 30;
-const HORARIO_FECHA_MIN = 13 * 60 + 30;
+/* ---------------- horário de funcionamento (configurável pelo admin) ---------------- */
+function horarioToMin(hhmm, fallback) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec((hhmm || '').trim());
+  if (!m) return fallback;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
 function dentroDoHorario() {
   const agora = new Date();
   const minutos = agora.getHours() * 60 + agora.getMinutes();
-  return minutos >= HORARIO_ABRE_MIN && minutos < HORARIO_FECHA_MIN;
+  const abre = horarioToMin(STATE.loja.horarioAbre, 10 * 60 + 30);
+  const fecha = horarioToMin(STATE.loja.horarioFecha, 13 * 60 + 30);
+  return minutos >= abre && minutos < fecha;
 }
 function lojaEstaAberta() {
-  if (STATE.loja.forcarAberta) return !!STATE.loja.aberta;
-  return !!STATE.loja.aberta && dentroDoHorario();
+  const modo = STATE.loja.modo || 'auto';
+  if (modo === 'forcar_aberta') return true;
+  if (modo === 'forcar_fechada') return false;
+  return dentroDoHorario();
+}
+function horarioTexto() {
+  return (STATE.loja.horarioAbre || '10:30') + 'h às ' + (STATE.loja.horarioFecha || '13:30') + 'h';
 }
 
 /* ---------------- render: cardápio do cliente ---------------- */
 function renderStatusBanner() {
   const el = document.getElementById('status-banner');
+  const modo = STATE.loja.modo || 'auto';
   if (lojaEstaAberta()) {
     el.className = 'status-banner status-open';
     el.innerHTML = '<span class="dot"></span> Aberto para pedidos';
   } else {
     el.className = 'status-banner status-closed';
-    el.innerHTML = '<span class="dot"></span> Fechado no momento — atendemos das 10h30 às 13h30';
+    const motivo = modo === 'forcar_fechada' ? 'Loja fechada no momento' : 'Fechado no momento — atendemos das ' + horarioTexto();
+    el.innerHTML = '<span class="dot"></span> ' + motivo;
   }
 }
 
@@ -533,7 +545,7 @@ function openCartDrawer() {
   }
   function validateCheckout() {
     if (!lojaEstaAberta()) {
-      alert('A loja fechou (atendemos das 10h30 às 13h30). Volte no próximo horário!');
+      alert('A loja fechou (atendemos das ' + horarioTexto() + '). Volte no próximo horário!');
       return false;
     }
     if (!checkoutInfo.nome) {
@@ -684,7 +696,7 @@ document.querySelectorAll('[data-admintab]').forEach((btn) => {
 });
 
 function renderAdmin() {
-  document.getElementById('admin-loja-aberta').checked = !!draft.loja.aberta;
+  renderLojaModoAdmin();
   renderCardapioDiaAdmin();
   const wrap = document.getElementById('admin-categories');
   wrap.innerHTML = '';
@@ -725,6 +737,34 @@ function renderAdmin() {
     panel.appendChild(addRow);
     wrap.appendChild(panel);
   });
+}
+
+function renderLojaModoAdmin() {
+  if (!draft.loja.horarioAbre) draft.loja.horarioAbre = '10:30';
+  if (!draft.loja.horarioFecha) draft.loja.horarioFecha = '13:30';
+  if (!draft.loja.modo) {
+    draft.loja.modo = draft.loja.forcarAberta ? 'forcar_aberta' : draft.loja.aberta === false ? 'forcar_fechada' : 'auto';
+  }
+
+  const modoWrap = document.getElementById('admin-loja-modo');
+  modoWrap.querySelectorAll('.chip').forEach((chip) => {
+    chip.classList.toggle('selected', chip.getAttribute('data-modo') === draft.loja.modo);
+    chip.onclick = () => {
+      draft.loja.modo = chip.getAttribute('data-modo');
+      renderLojaModoAdmin();
+    };
+  });
+
+  const abreInput = document.getElementById('admin-horario-abre');
+  const fechaInput = document.getElementById('admin-horario-fecha');
+  abreInput.value = draft.loja.horarioAbre;
+  fechaInput.value = draft.loja.horarioFecha;
+  abreInput.oninput = (e) => {
+    draft.loja.horarioAbre = e.target.value;
+  };
+  fechaInput.oninput = (e) => {
+    draft.loja.horarioFecha = e.target.value;
+  };
 }
 
 function renderCardapioDiaAdmin() {
@@ -911,9 +951,6 @@ function renderAdminItemRow(cat, item, idx) {
   return row;
 }
 
-document.getElementById('admin-loja-aberta').addEventListener('change', (e) => {
-  draft.loja.aberta = e.target.checked;
-});
 document.getElementById('btn-descartar').addEventListener('click', () => {
   draft = JSON.parse(JSON.stringify(STATE));
   renderAdmin();

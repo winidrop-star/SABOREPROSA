@@ -94,11 +94,17 @@
 
     <div id="admintab-cardapio">
       <div class="admin-panel">
-        <div class="toggle-row" style="margin-top:0;">
-          <input type="checkbox" id="admin-loja-aberta">
-          <label for="admin-loja-aberta" style="text-transform:none;letter-spacing:0;font-weight:600;color:var(--ink);">Loja aberta para pedidos</label>
+        <div class="section-label" style="margin-top:0;">Funcionamento da loja</div>
+        <div class="chip-group" id="admin-loja-modo">
+          <button type="button" class="chip" data-modo="auto">Automático (segue o horário)</button>
+          <button type="button" class="chip" data-modo="forcar_aberta">Forçar aberta agora</button>
+          <button type="button" class="chip" data-modo="forcar_fechada">Forçar fechada agora</button>
         </div>
-        <p style="font-size:0.8rem;color:var(--ink-soft);margin:6px 0 0;">O site só recebe pedidos das 10h30 às 13h30. Desmarque aqui só se quiser fechar mais cedo nesse horário (ex: acabou a comida).</p>
+        <div class="form-row" style="margin-top:14px;">
+          <div class="field" style="margin-top:0;"><label for="admin-horario-abre">Abre às</label><input id="admin-horario-abre" type="time"></div>
+          <div class="field" style="margin-top:0;"><label for="admin-horario-fecha">Fecha às</label><input id="admin-horario-fecha" type="time"></div>
+        </div>
+        <p style="font-size:0.8rem;color:var(--ink-soft);margin:10px 0 0;">No modo "Automático", o site abre e fecha sozinho nesse horário, todo dia. Use "Forçar aberta/fechada" pra abrir fora do horário ou fechar antes (ex: acabou a comida) — dura até você trocar de novo.</p>
       </div>
       <div id="admin-cardapio-dia"></div>
       <div id="admin-categories"></div>

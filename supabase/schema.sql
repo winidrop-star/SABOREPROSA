@@ -85,7 +85,7 @@ create policy "movimentos escrita publica" on caixa_movimentos for insert with c
 -- Dados iniciais — o mesmo cardápio que já estava nos dois apps
 -- ---------------------------------------------------------------
 insert into config (chave, valor) values
-('loja', '{"aberta":true,"forcarAberta":false,"whatsapp":"5565992286248"}'),
+('loja', '{"modo":"auto","horarioAbre":"10:30","horarioFecha":"13:30","whatsapp":"5565992286248"}'),
 ('cardapioDia', '{"proteina1":"Bife Bovino","proteina2":"Coxa e Sobrecoxa ao Molho","feijaoOpcoes":["Feijão preto","Sem feijão"],"adicionaisOpcoes":["Frango Empanado"]}'),
 ('cupons', '[]'),
 ('categorias', '[
