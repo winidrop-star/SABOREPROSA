@@ -1,0 +1,14 @@
+{
+  "name": "Sabor e Prosa",
+  "short_name": "Sabor e Prosa",
+  "description": "Marmitas feitas na hora, pedido sem cadastro.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#5C3A22",
+  "theme_color": "#5C3A22",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
