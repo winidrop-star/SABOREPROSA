@@ -696,7 +696,6 @@ document.querySelectorAll('[data-admintab]').forEach((btn) => {
 });
 
 function renderAdmin() {
-  renderLojaModoAdmin();
   renderCardapioDiaAdmin();
   const wrap = document.getElementById('admin-categories');
   wrap.innerHTML = '';
@@ -737,34 +736,6 @@ function renderAdmin() {
     panel.appendChild(addRow);
     wrap.appendChild(panel);
   });
-}
-
-function renderLojaModoAdmin() {
-  if (!draft.loja.horarioAbre) draft.loja.horarioAbre = '10:30';
-  if (!draft.loja.horarioFecha) draft.loja.horarioFecha = '13:30';
-  if (!draft.loja.modo) {
-    draft.loja.modo = draft.loja.forcarAberta ? 'forcar_aberta' : draft.loja.aberta === false ? 'forcar_fechada' : 'auto';
-  }
-
-  const modoWrap = document.getElementById('admin-loja-modo');
-  modoWrap.querySelectorAll('.chip').forEach((chip) => {
-    chip.classList.toggle('selected', chip.getAttribute('data-modo') === draft.loja.modo);
-    chip.onclick = () => {
-      draft.loja.modo = chip.getAttribute('data-modo');
-      renderLojaModoAdmin();
-    };
-  });
-
-  const abreInput = document.getElementById('admin-horario-abre');
-  const fechaInput = document.getElementById('admin-horario-fecha');
-  abreInput.value = draft.loja.horarioAbre;
-  fechaInput.value = draft.loja.horarioFecha;
-  abreInput.oninput = (e) => {
-    draft.loja.horarioAbre = e.target.value;
-  };
-  fechaInput.oninput = (e) => {
-    draft.loja.horarioFecha = e.target.value;
-  };
 }
 
 function renderCardapioDiaAdmin() {

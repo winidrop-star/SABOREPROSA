@@ -163,7 +163,7 @@ const CAIXA_TABS = [
   { id: 'pedidos', label: 'Pedidos', icon: '<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><line x1="8.5" y1="8" x2="15.5" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8.5" y1="12" x2="15.5" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8.5" y1="16" x2="12.5" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' },
   { id: 'caixa', label: 'Caixa', icon: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="2.6" stroke="currentColor" stroke-width="1.5"/></svg>' },
   { id: 'relatorios', label: 'Relatórios', icon: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M11 20V4M18 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' },
-  { id: 'cardapio', label: 'Cardápio do dia', icon: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="9" width="18" height="11" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9c0-2.8 2-4.5 4.5-4.5h9C19 4.5 21 6.2 21 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' }
+  { id: 'cardapio', label: 'Loja & cardápio', icon: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="9" width="18" height="11" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9c0-2.8 2-4.5 4.5-4.5h9C19 4.5 21 6.2 21 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>' }
 ];
 
 function renderCaixa() {
@@ -894,16 +894,36 @@ function renderMovForm() {
 
 /* ---------------- ABA: Cardápio do dia ---------------- */
 let draftCardapio = null;
+let draftLoja = null;
 
 function renderTabCardapioDia() {
   if (!draftCardapio) draftCardapio = JSON.parse(JSON.stringify(STATE.cardapioDia));
+  if (!draftLoja) draftLoja = JSON.parse(JSON.stringify(STATE.loja));
   const cd = draftCardapio;
+  const lj = draftLoja;
   if (!cd.feijaoOpcoes) cd.feijaoOpcoes = [];
   if (!cd.adicionaisOpcoes) cd.adicionaisOpcoes = [];
+  if (!lj.horarioAbre) lj.horarioAbre = '10:30';
+  if (!lj.horarioFecha) lj.horarioFecha = '13:30';
+  if (!lj.modo) lj.modo = lj.forcarAberta ? 'forcar_aberta' : lj.aberta === false ? 'forcar_fechada' : 'auto';
 
   const wrap = document.getElementById('caixa-body');
   wrap.innerHTML =
     '<div class="form-panel">' +
+    '<div class="section-label" style="margin-top:0;">Funcionamento da loja</div>' +
+    '<div class="chip-group" id="lj-modo-chips">' +
+    '<button type="button" class="chip" data-modo="auto">Automático (segue o horário)</button>' +
+    '<button type="button" class="chip" data-modo="forcar_aberta">Forçar aberta agora</button>' +
+    '<button type="button" class="chip" data-modo="forcar_fechada">Forçar fechada agora</button>' +
+    '</div>' +
+    '<div class="form-row" style="margin-top:12px;">' +
+    '<div class="field" style="margin-top:0;"><label for="lj-horario-abre">Abre às</label><input id="lj-horario-abre" type="time"></div>' +
+    '<div class="field" style="margin-top:0;"><label for="lj-horario-fecha">Fecha às</label><input id="lj-horario-fecha" type="time"></div>' +
+    '</div>' +
+    '<p style="font-size:0.8rem;color:var(--ink-soft);margin:8px 0 0;">No modo "Automático" a loja abre e fecha sozinha nesse horário, todo dia. Use "Forçar" pra abrir fora do horário ou fechar antes (ex: acabou a comida).</p>' +
+    '</div>' +
+    '<div class="form-panel">' +
+    '<div class="section-label" style="margin-top:0;">Cardápio do dia</div>' +
     '<p style="font-size:0.85rem;color:var(--ink-soft);margin:0 0 4px;">É aqui que você mesma muda o que varia todo dia: as 2 proteínas principais, as opções de feijão e a carne extra do buffet. Se um feijão acabar, remove ele daqui e clica em "Publicar alterações" — não precisa esperar ninguém mudar pra você.</p>' +
     '<div class="field" style="margin-top:10px;"><label for="cd-proteina1">Proteína principal 1</label><input id="cd-proteina1" type="text"></div>' +
     '<div class="field"><label for="cd-proteina2">Proteína principal 2</label><input id="cd-proteina2" type="text"></div>' +
@@ -917,6 +937,18 @@ function renderTabCardapioDia() {
     '</div>' +
     '<div id="cd-status" style="font-size:0.85rem;font-weight:700;text-align:center;margin-top:10px;color:var(--ready);"></div>' +
     '</div>';
+
+  document.querySelectorAll('#lj-modo-chips .chip').forEach((chip) => {
+    chip.classList.toggle('selected', chip.getAttribute('data-modo') === lj.modo);
+    chip.addEventListener('click', () => {
+      lj.modo = chip.getAttribute('data-modo');
+      renderTabCardapioDia();
+    });
+  });
+  document.getElementById('lj-horario-abre').value = lj.horarioAbre;
+  document.getElementById('lj-horario-abre').addEventListener('input', (e) => (lj.horarioAbre = e.target.value));
+  document.getElementById('lj-horario-fecha').value = lj.horarioFecha;
+  document.getElementById('lj-horario-fecha').addEventListener('input', (e) => (lj.horarioFecha = e.target.value));
 
   document.getElementById('cd-proteina1').value = cd.proteina1 || '';
   document.getElementById('cd-proteina1').addEventListener('input', (e) => (cd.proteina1 = e.target.value));
@@ -971,6 +1003,7 @@ function renderTabCardapioDia() {
   });
   document.getElementById('cd-descartar').addEventListener('click', () => {
     draftCardapio = JSON.parse(JSON.stringify(STATE.cardapioDia));
+    draftLoja = JSON.parse(JSON.stringify(STATE.loja));
     renderTabCardapioDia();
   });
   document.getElementById('cd-publicar').addEventListener('click', publicarCardapioDia);
@@ -980,9 +1013,10 @@ async function publicarCardapioDia() {
   const statusEl = document.getElementById('cd-status');
   statusEl.textContent = 'Publicando...';
   try {
-    await saveState({ cardapioDia: draftCardapio });
+    await saveState({ cardapioDia: draftCardapio, loja: draftLoja });
     STATE.cardapioDia = draftCardapio;
-    statusEl.textContent = 'Cardápio do dia atualizado! (já vale no site também)';
+    STATE.loja = draftLoja;
+    statusEl.textContent = 'Atualizado! (já vale no site também)';
   } catch (err) {
     statusEl.textContent = 'Não deu para publicar agora. Tente de novo em instantes.';
   }
