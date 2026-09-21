@@ -121,7 +121,9 @@ function renderConfigRow(cat, item, variant) {
         .join('') +
       '</div></div>';
   } else if (proteinasIncluidas && cd.proteina1 && cd.proteina2) {
-    proteinaHtml = '<div class="config-note">Já vem com ' + cd.proteina1 + ' e ' + cd.proteina2 + '</div>';
+    proteinaHtml =
+      '<div class="config-note"><strong>Já vem com ' + cd.proteina1 + ' e ' + cd.proteina2 + '.</strong> ' +
+      'Quiser só uma das duas, escreve nas observações do pedido.</div>';
   }
 
   let feijaoHtml = '';
