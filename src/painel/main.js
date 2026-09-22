@@ -1,4 +1,4 @@
-import { fmtBRL, fmtHora, inPeriodo } from '../lib/format.js';
+import { fmtBRL, fmtHora, fmtDataHora, inPeriodo } from '../lib/format.js';
 import { loadState, saveState } from '../lib/config.js';
 import { baixarComandaPdf } from '../lib/pdfComanda.js';
 import { unlockAudio, playReadyChime, playNovoPedidoAlerta } from '../lib/audio.js';
@@ -1071,6 +1071,24 @@ function renderTabRelatorios() {
     .sort((a, b) => b.qtd - a.qtd)
     .slice(0, 8);
 
+  const porPagamento = {};
+  pedidosPeriodo.forEach((o) => {
+    const fp = o.formaPagamento || 'Não informado';
+    if (!porPagamento[fp]) porPagamento[fp] = { qtd: 0, total: 0 };
+    porPagamento[fp].qtd += 1;
+    porPagamento[fp].total += o.total || 0;
+  });
+  const pagamentoArr = Object.keys(porPagamento)
+    .map((k) => ({ nome: k, qtd: porPagamento[k].qtd, total: porPagamento[k].total }))
+    .sort((a, b) => b.total - a.total);
+
+  const porModo = { retirada: { qtd: 0, total: 0 }, entrega: { qtd: 0, total: 0 } };
+  pedidosPeriodo.forEach((o) => {
+    const m = o.modo === 'entrega' ? 'entrega' : 'retirada';
+    porModo[m].qtd += 1;
+    porModo[m].total += o.total || 0;
+  });
+
   wrap.innerHTML =
     '<div class="subtabs" id="periodo-tabs-rel"></div>' +
     '<div class="stat-grid">' +
@@ -1079,7 +1097,13 @@ function renderTabRelatorios() {
     '<div class="stat-tile"><div class="label">Ticket médio</div><div class="value">' + fmtBRL(ticketMedio) + '</div></div>' +
     '</div>' +
     '<div class="section-label">Mais vendidos</div>' +
-    '<div id="ranking-list"></div>';
+    '<div id="ranking-list"></div>' +
+    '<div class="section-label">Por forma de pagamento</div>' +
+    '<div id="pagamento-list"></div>' +
+    '<div class="section-label">Retirada x Entrega</div>' +
+    '<div id="modo-list"></div>' +
+    '<div class="section-label">Pedidos do período (' + qtdPedidos + ')</div>' +
+    '<div id="pedidos-periodo-list"></div>';
 
   wirePeriodoTabs('periodo-tabs-rel', relatoriosPeriodo, (p) => {
     relatoriosPeriodo = p;
@@ -1097,6 +1121,59 @@ function renderTabRelatorios() {
       row.innerHTML = '<span class="rank-name">' + r.nome + '</span><span class="rank-qtd">' + r.qtd + 'x</span>';
       rankWrap.appendChild(row);
     });
+  }
+
+  const pagWrap = document.getElementById('pagamento-list');
+  if (pagamentoArr.length === 0) {
+    pagWrap.innerHTML = '<div class="empty-state">Sem dados nesse período.</div>';
+  } else {
+    pagWrap.innerHTML = '';
+    pagamentoArr.forEach((p) => {
+      const row = document.createElement('div');
+      row.className = 'mov-row';
+      row.innerHTML =
+        '<div><div class="mov-tipo">' + p.nome + '</div>' +
+        '<div class="mov-motivo">' + p.qtd + (p.qtd === 1 ? ' pedido' : ' pedidos') + '</div></div>' +
+        '<div class="mov-valor pos">' + fmtBRL(p.total) + '</div>';
+      pagWrap.appendChild(row);
+    });
+  }
+
+  const modoWrap = document.getElementById('modo-list');
+  modoWrap.innerHTML = '';
+  [
+    { id: 'retirada', label: 'Retirada' },
+    { id: 'entrega', label: 'Entrega' }
+  ].forEach((m) => {
+    const d = porModo[m.id];
+    const row = document.createElement('div');
+    row.className = 'mov-row';
+    row.innerHTML =
+      '<div><div class="mov-tipo">' + m.label + '</div>' +
+      '<div class="mov-motivo">' + d.qtd + (d.qtd === 1 ? ' pedido' : ' pedidos') + '</div></div>' +
+      '<div class="mov-valor pos">' + fmtBRL(d.total) + '</div>';
+    modoWrap.appendChild(row);
+  });
+
+  const listaWrap = document.getElementById('pedidos-periodo-list');
+  if (pedidosPeriodo.length === 0) {
+    listaWrap.innerHTML = '<div class="empty-state">Nenhum pedido concluído nesse período.</div>';
+  } else {
+    listaWrap.innerHTML = '';
+    pedidosPeriodo
+      .slice()
+      .sort((a, b) => b.criadoEm - a.criadoEm)
+      .forEach((o) => {
+        const row = document.createElement('div');
+        row.className = 'mov-row';
+        const quando = fmtDataHora(o.concluidoEm || o.criadoEm);
+        const detalhe = quando + ' · ' + (o.modo === 'entrega' ? 'Entrega' : 'Retirada') + (o.formaPagamento ? ' · ' + o.formaPagamento : '');
+        row.innerHTML =
+          '<div><div class="mov-tipo">' + o.cliente + '</div>' +
+          '<div class="mov-motivo">' + detalhe + '</div></div>' +
+          '<div class="mov-valor pos">' + fmtBRL(o.total || 0) + '</div>';
+        listaWrap.appendChild(row);
+      });
   }
 }
 

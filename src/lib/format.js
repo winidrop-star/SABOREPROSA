@@ -7,6 +7,11 @@ export function fmtHora(ts) {
   return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
 }
 
+export function fmtDataHora(ts) {
+  const d = new Date(ts);
+  return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+
 export function fmtBRL(n) {
   return 'R$ ' + (n || 0).toFixed(2).replace('.', ',');
 }
