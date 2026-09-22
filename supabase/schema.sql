@@ -86,7 +86,7 @@ create policy "movimentos escrita publica" on caixa_movimentos for insert with c
 -- ---------------------------------------------------------------
 insert into config (chave, valor) values
 ('loja', '{"modo":"auto","horarioAbre":"10:30","horarioFecha":"13:30","whatsapp":"5565992286248"}'),
-('cardapioDia', '{"proteina1":"Bife Bovino","proteina2":"Coxa e Sobrecoxa ao Molho","feijaoOpcoes":["Feijão preto","Sem feijão"],"adicionaisOpcoes":["Frango Empanado"]}'),
+('cardapioDia', '{"proteina1":"Bife Bovino","proteina2":"Coxa e Sobrecoxa ao Molho","feijaoOpcoes":["Feijão preto","Sem feijão"],"legumesOpcoes":[],"adicionaisOpcoes":["Frango Empanado"]}'),
 ('cupons', '[]'),
 ('categorias', '[
  {"id":"marmitas","nome":"Marmitas","itens":[

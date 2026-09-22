@@ -221,7 +221,7 @@ function draftConfigKeyFor(catId, itemId, variantLabel) {
   return catId + '::' + itemId + '::' + (variantLabel || '');
 }
 function getDraftConfigState(ckey) {
-  if (!draftConfigState[ckey]) draftConfigState[ckey] = { proteina: null, feijao: null, adicionais: {} };
+  if (!draftConfigState[ckey]) draftConfigState[ckey] = { proteina: null, feijao: null, legume: null, adicionais: {} };
   return draftConfigState[ckey];
 }
 const ADICIONAIS_FIXOS = [
@@ -255,6 +255,7 @@ function buildConfigVariantLabel(variant, escolheProteina, cd, st) {
     parts.push(st.proteina);
   }
   if (st.feijao) parts.push(st.feijao);
+  if (st.legume) parts.push(st.legume);
   const extras = Object.keys(st.adicionais).filter((k) => st.adicionais[k]);
   if (extras.length) parts.push('+ ' + extras.join(', '));
   return parts.join(', ');
@@ -296,6 +297,16 @@ function renderDraftConfigRow(cat, item, variant) {
       '</div></div>';
   }
 
+  let legumeHtml = '';
+  if (escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length >= 2) {
+    legumeHtml =
+      '<div class="config-group"><div class="config-label">Escolha o legume</div><div class="chip-group">' +
+      cd.legumesOpcoes
+        .map((l) => '<button type="button" class="chip small config-legume' + (st.legume === l ? ' selected' : '') + '" data-configkey="' + ckey + '" data-value="' + l + '">' + l + '</button>')
+        .join('') +
+      '</div></div>';
+  }
+
   let adicionaisHtml = '';
   if (temAdicionais) {
     const catalogoAdicionais = getAdicionaisCatalogo();
@@ -311,13 +322,15 @@ function renderDraftConfigRow(cat, item, variant) {
 
   const proteinaOk = !(escolheProteina && cd.proteina1 && cd.proteina2) || st.proteina;
   const feijaoOk = !(escolheFeijao && cd.feijaoOpcoes && cd.feijaoOpcoes.length >= 2) || st.feijao;
-  const podeAdicionar = proteinaOk && feijaoOk && item.disponivel;
+  const legumeOk = !(escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length >= 2) || st.legume;
+  const podeAdicionar = proteinaOk && feijaoOk && legumeOk && item.disponivel;
 
   return (
     '<div class="marmita-config" data-configkey="' + ckey + '">' +
     (label ? '<div class="variant-label-row">' + label + ' · <span class="price">' + fmtBRL(basePrice) + '</span></div>' : '') +
     proteinaHtml +
     feijaoHtml +
+    legumeHtml +
     adicionaisHtml +
     '<div class="config-footer">' +
     '<span class="config-total mono price">' + fmtBRL(totalUnit) + '</span>' +
@@ -336,7 +349,7 @@ function addDraftConfiguredToCart(catId, itemId, variantLabel, name, basePrice, 
   const current = draftCart[key] || { qty: 0, name, variant: compositeLabel || null, unitPrice };
   current.qty += 1;
   draftCart[key] = current;
-  draftConfigState[ckey] = { proteina: null, feijao: null, adicionais: {} };
+  draftConfigState[ckey] = { proteina: null, feijao: null, legume: null, adicionais: {} };
   renderTabPedidoNovo();
 }
 
@@ -424,13 +437,14 @@ function renderTabPedidoNovo() {
     });
   }
 
-  listWrap.querySelectorAll('.config-proteina, .config-feijao, .config-adicional').forEach((btn) => {
+  listWrap.querySelectorAll('.config-proteina, .config-feijao, .config-legume, .config-adicional').forEach((btn) => {
     btn.addEventListener('click', () => {
       const ckey = btn.getAttribute('data-configkey');
       const value = btn.getAttribute('data-value');
       const st = getDraftConfigState(ckey);
       if (btn.classList.contains('config-proteina')) st.proteina = st.proteina === value ? null : value;
       else if (btn.classList.contains('config-feijao')) st.feijao = st.feijao === value ? null : value;
+      else if (btn.classList.contains('config-legume')) st.legume = st.legume === value ? null : value;
       else st.adicionais[value] = !st.adicionais[value];
       renderTabPedidoNovo();
     });
@@ -904,6 +918,7 @@ function renderTabCardapioDia() {
   const cd = draftCardapio;
   const lj = draftLoja;
   if (!cd.feijaoOpcoes) cd.feijaoOpcoes = [];
+  if (!cd.legumesOpcoes) cd.legumesOpcoes = [];
   if (!cd.adicionaisOpcoes) cd.adicionaisOpcoes = [];
   if (!lj.horarioAbre) lj.horarioAbre = '10:30';
   if (!lj.horarioFecha) lj.horarioFecha = '13:30';
@@ -931,6 +946,8 @@ function renderTabCardapioDia() {
     '<div class="field"><label for="cd-proteina2">Proteína principal 2</label><input id="cd-proteina2" type="text"></div>' +
     '<div class="field"><label>Opções de feijão (o cliente só escolhe quando houver 2)</label><div id="cd-feijao-list"></div>' +
     '<div style="display:flex;gap:8px;margin-top:8px;"><input id="cd-feijao-novo" type="text" placeholder="Ex: Feijão preto" style="flex:1;"><button class="btn-ghost" id="cd-feijao-add" type="button">+ Adicionar</button></div></div>' +
+    '<div class="field"><label>Opções de legume/refogado (o cliente só escolhe quando houver 2)</label><div id="cd-legume-list"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;"><input id="cd-legume-novo" type="text" placeholder="Ex: Abobrinha e cenoura refogada" style="flex:1;"><button class="btn-ghost" id="cd-legume-add" type="button">+ Adicionar</button></div></div>' +
     '<div class="field"><label>Carne extra do buffet (vira adicional pago de R$ 25,00)</label><div id="cd-extra-list"></div>' +
     '<div style="display:flex;gap:8px;margin-top:8px;"><input id="cd-extra-novo" type="text" placeholder="Ex: Costelinha suína frita" style="flex:1;"><button class="btn-ghost" id="cd-extra-add" type="button">+ Adicionar</button></div></div>' +
     '<div style="display:flex;gap:10px;margin-top:16px;">' +
@@ -987,6 +1004,7 @@ function renderTabCardapioDia() {
     }
   }
   renderCdList('cd-feijao-list', cd.feijaoOpcoes);
+  renderCdList('cd-legume-list', cd.legumesOpcoes);
   renderCdList('cd-extra-list', cd.adicionaisOpcoes);
 
   document.getElementById('cd-feijao-add').addEventListener('click', () => {
@@ -994,6 +1012,13 @@ function renderTabCardapioDia() {
     const val = input.value.trim();
     if (!val) return;
     cd.feijaoOpcoes.push(val);
+    renderTabCardapioDia();
+  });
+  document.getElementById('cd-legume-add').addEventListener('click', () => {
+    const input = document.getElementById('cd-legume-novo');
+    const val = input.value.trim();
+    if (!val) return;
+    cd.legumesOpcoes.push(val);
     renderTabCardapioDia();
   });
   document.getElementById('cd-extra-add').addEventListener('click', () => {

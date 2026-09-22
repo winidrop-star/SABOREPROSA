@@ -6,7 +6,7 @@ const CHAVES = ['loja', 'cardapioDia', 'categorias', 'cupons'];
 // (rode supabase/schema.sql no seu projeto para não cair nesse caso).
 const FALLBACK = {
   loja: { modo: 'auto', horarioAbre: '10:30', horarioFecha: '13:30', whatsapp: '' },
-  cardapioDia: { proteina1: '', proteina2: '', feijaoOpcoes: [], adicionaisOpcoes: [] },
+  cardapioDia: { proteina1: '', proteina2: '', feijaoOpcoes: [], legumesOpcoes: [], adicionaisOpcoes: [] },
   cupons: [],
   categorias: []
 };
