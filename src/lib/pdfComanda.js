@@ -6,8 +6,8 @@ const PAPER_WIDTH_MM = 80; // troque para 58 se a impressora usar bobina de 58mm
 // API externa (o app original usava window.claude.use('downloads')).
 export function baixarComandaPdf(linhas, nomeArquivo) {
   const marginMm = 4;
-  const fontSize = 9;
-  const lineHeightMm = 4.4;
+  const fontSize = 13;
+  const lineHeightMm = 6.2;
   const usableWidthMm = PAPER_WIDTH_MM - marginMm * 2;
 
   const probe = new jsPDF({ unit: 'mm', format: [PAPER_WIDTH_MM, 40] });
@@ -26,7 +26,7 @@ export function baixarComandaPdf(linhas, nomeArquivo) {
   const doc = new jsPDF({ unit: 'mm', format: [PAPER_WIDTH_MM, heightMm] });
   doc.setFont('courier', 'normal');
   doc.setFontSize(fontSize);
-  let y = marginMm + 3;
+  let y = marginMm + 5;
   wrappedLines.forEach((line) => {
     doc.text(line, marginMm, y);
     y += lineHeightMm;
