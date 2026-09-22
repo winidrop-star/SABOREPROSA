@@ -155,6 +155,8 @@ function renderConfigRow(cat, item, variant) {
         )
         .join('') +
       '</div></div>';
+  } else if (escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length === 1) {
+    legumeHtml = '<div class="config-note">Acompanha <strong>' + cd.legumesOpcoes[0] + '</strong>.</div>';
   }
 
   let adicionaisHtml = '';
