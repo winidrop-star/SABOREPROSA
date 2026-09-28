@@ -94,3 +94,25 @@ no código do navegador, isso é normal) consegue ler e escrever nas tabelas
 `pedidos`, `caixa_movimentos` e `config`. Pra uma loja pequena isso costuma
 ser aceitável, mas se um dia vocês quiserem mais segurança (login de
 funcionário de verdade, por exemplo), me chamem que a gente evolui isso.
+
+## App "Minha Glicose" (`/diabete/`)
+
+App separado, pessoal, para quem tem diabetes — não tem nada a ver com a
+loja e não usa o Supabase. Fica em `public/diabete/` e, publicado, abre em
+`SEUENDERECO.vercel.app/diabete/`. Os dados ficam salvos só no celular de
+quem usa (dá pra baixar uma cópia de segurança na aba Histórico).
+
+- **Início**: anota a glicose com um toque (com cor verde/amarelo/vermelho)
+  e abre o plano de glicose baixa quando o valor está abaixo do limite.
+- **Corrida**: mede antes → o app diz se pode correr, se precisa comer
+  antes ou se hoje não deve → checklist → cronômetro com botão "Estou
+  passando mal" (manda a localização pro WhatsApp da família) → medida
+  depois e lembrete de medir antes de dormir.
+- **Histórico**: quanto a glicose cai em média ao correr, lista das
+  medidas e resumo pra mandar pro médico.
+- **Ajustes**: horários, faixas de glicose (confirmar com o médico),
+  contato da família, ficha de emergência e botões que colocam os
+  lembretes diários na agenda do celular (iPhone ou Google Agenda).
+
+Para instalar: abra o link no celular e use "Adicionar à tela de início"
+(iPhone: botão Compartilhar no Safari; Android: menu ⋮ do Chrome).

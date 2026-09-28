@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minha Glicose</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Glicose">
+<style>
+  :root{
+    --bg:#f6f7f5; --card:#ffffff; --text:#1c2321; --muted:#5b6663; --line:#dfe4e2;
+    --brand:#0f766e; --brand-ink:#ffffff;
+    --ok:#15803d; --ok-bg:#e8f6ec;
+    --warn:#a16207; --warn-bg:#fdf6d8;
+    --alto:#c2410c; --alto-bg:#fdeee4;
+    --bad:#b91c1c; --bad-bg:#fde8e8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#111615; --card:#1b2220; --text:#eef2f0; --muted:#a3b0ac; --line:#2e3835;
+      --brand:#2bb3a4; --brand-ink:#06201d;
+      --ok:#4ade80; --ok-bg:#133222;
+      --warn:#facc15; --warn-bg:#352d0c;
+      --alto:#fb923c; --alto-bg:#3a2112;
+      --bad:#f87171; --bad-bg:#3b1515;
+    }
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--bg); color:var(--text); }
+  body{ font:18px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+  main{ max-width:560px; margin:0 auto; padding:16px; }
+  h1{ font-size:1.5rem; margin:4px 0 14px; }
+  h2{ font-size:1.2rem; margin:0 0 10px; }
+  h3{ font-size:1.05rem; margin:14px 0 6px; }
+  p{ margin:6px 0; }
+  .muted{ color:var(--muted); font-size:.92rem; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px; }
+  button,.btn{
+    display:block; width:100%; min-height:56px; border:0; border-radius:14px; font:inherit; font-weight:700;
+    background:var(--brand); color:var(--brand-ink); cursor:pointer; padding:12px 16px; text-align:center; text-decoration:none; margin-top:10px;
+  }
+  button.sec,.btn.sec{ background:transparent; color:var(--brand); border:2px solid var(--brand); }
+  button.sos{ background:var(--bad); color:#fff; font-size:1.15rem; }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+  button.mini{ display:inline-block; width:auto; min-height:0; padding:4px 10px; margin:0; font-size:.85rem; background:transparent; color:var(--muted); border:1px solid var(--line); }
+  input,select,textarea{
+    width:100%; font:inherit; padding:12px; border-radius:12px; border:2px solid var(--line); background:var(--bg); color:var(--text);
+  }
+  input.grande{ font-size:2rem; text-align:center; font-weight:700; padding:10px; }
+  label{ display:block; font-weight:600; margin:12px 0 4px; }
+  .linha{ display:flex; gap:10px; }
+  .linha > *{ flex:1; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .chip{ display:inline-block; width:auto; min-height:44px; margin:0; padding:8px 14px; border-radius:999px; font-weight:600;
+    background:var(--bg); color:var(--text); border:2px solid var(--line); }
+  .chip.on{ background:var(--brand); color:var(--brand-ink); border-color:var(--brand); }
+  .aviso{ border-radius:14px; padding:14px 16px; margin-top:12px; border-left:8px solid; }
+  .aviso b.big{ display:block; font-size:1.25rem; margin-bottom:4px; }
+  .verde{ background:var(--ok-bg); border-color:var(--ok); }
+  .amarelo{ background:var(--warn-bg); border-color:var(--warn); }
+  .laranja{ background:var(--alto-bg); border-color:var(--alto); }
+  .vermelho{ background:var(--bad-bg); border-color:var(--bad); }
+  .valor{ font-size:2.6rem; font-weight:800; line-height:1; }
+  .t-verde{ color:var(--ok); } .t-amarelo{ color:var(--warn); } .t-laranja{ color:var(--alto); } .t-vermelho{ color:var(--bad); }
+  .check{ display:flex; align-items:flex-start; gap:12px; padding:12px 4px; border-bottom:1px solid var(--line); font-weight:500; margin:0; cursor:pointer; }
+  .check:last-child{ border-bottom:0; }
+  .check input{ width:28px; height:28px; flex:none; margin:0; accent-color:var(--brand); }
+  .timer{ font-size:3.2rem; font-weight:800; text-align:center; font-variant-numeric:tabular-nums; margin:8px 0; }
+  .lista{ list-style:none; padding:0; margin:0; }
+  .lista li{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .lista li:last-child{ border-bottom:0; }
+  .lista .num{ font-size:1.4rem; font-weight:800; min-width:64px; }
+  .lista .info{ flex:1; }
+  nav{
+    position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--card); border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom); z-index:5;
+  }
+  nav button{ flex:1; margin:0; border-radius:0; background:transparent; color:var(--muted); min-height:68px; font-size:.82rem; padding:6px 2px; }
+  nav button span{ display:block; font-size:1.5rem; line-height:1.2; }
+  nav button.on{ color:var(--brand); }
+  .sobre{ position:fixed; inset:0; background:var(--bg); z-index:10; overflow:auto; }
+  .fecha{ position:sticky; top:0; }
+  .kv p{ margin:4px 0; }
+  .kv b{ display:inline-block; min-width:110px; }
+  .toast{ position:fixed; left:16px; right:16px; bottom:96px; max-width:528px; margin:0 auto; background:var(--text); color:var(--bg);
+    padding:14px 16px; border-radius:12px; font-weight:600; z-index:20; text-align:center; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav"></nav>
+<div id="sobre"></div>
+
+<script>
+/* =========================================================
+   Minha Glicose — app simples para o dia a dia com diabetes.
+   Tudo fica salvo só neste celular (localStorage).
+   ========================================================= */
+
+const CHAVE = 'minha-glicose-v1';
+const PADRAO = {
+  cfg: {
+    nome: '',
+    horaCorrida: '06:00',
+    horaDormir: '22:00',
+    insulina: false,
+    // Faixas (mg/dL). Os valores padrão seguem recomendações gerais;
+    // devem ser confirmados/ajustados com o médico.
+    hipo: 70, baixo: 90, alto: 250, muitoAlto: 300,
+    esperaDepois: 20,
+    contatoNome: '', contatoTel: '',
+    tipo: '', remedios: '', alergias: '', medico: '', obs: ''
+  },
+  glicemias: [],   // { t, v, m }  (hora, valor, momento)
+  corridas: [],    // { inicio, fim, antes, depois, km, caminhada }
+  run: null        // corrida em andamento
+};
+
+let D = carregar();
+let aba = 'inicio';
+let momentoSel = null;
+let sobre = null;          // 'ficha' | 'hipo'
+let hipoAte = null;
+
+function carregar(){
+  try{
+    const s = JSON.parse(localStorage.getItem(CHAVE));
+    if(s) return { ...PADRAO, ...s, cfg: { ...PADRAO.cfg, ...s.cfg } };
+  }catch(e){}
+  return JSON.parse(JSON.stringify(PADRAO));
+}
+function salvar(){
+  try{ localStorage.setItem(CHAVE, JSON.stringify(D)); }
+  catch(e){ toast('Não consegui salvar neste celular.'); }
+}
+
+/* ---------- utilidades ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const agora = () => Date.now();
+const hojeStr = (t = agora()) => new Date(t).toDateString();
+const hora = (t) => new Date(t).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+const dia = (t) => {
+  const d = new Date(t), h = new Date();
+  const ontem = new Date(); ontem.setDate(h.getDate() - 1);
+  if(d.toDateString() === h.toDateString()) return 'Hoje';
+  if(d.toDateString() === ontem.toDateString()) return 'Ontem';
+  return d.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'2-digit' });
+};
+const mmss = (ms) => {
+  const s = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  return h ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
+};
+function toast(msg){
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+function numero(id){
+  const v = parseInt(($(id)?.value || '').replace(/\D/g, ''), 10);
+  if(!v || v < 20 || v > 600){ toast('Digite um valor entre 20 e 600.'); return null; }
+  return v;
+}
+
+/* ---------- faixas de glicose ---------- */
+function cor(v){
+  const c = D.cfg;
+  if(v < c.hipo) return 'vermelho';
+  if(v < c.baixo) return 'amarelo';
+  if(v <= c.alto) return 'verde';
+  if(v <= c.muitoAlto) return 'laranja';
+  return 'vermelho';
+}
+
+// Avaliação para ANTES DA CORRIDA
+function vereditoCorrida(v){
+  const c = D.cfg;
+  if(v < c.hipo) return { cor:'vermelho', tipo:'hipo', titulo:'Glicose baixa — não corra agora',
+    texto:`Coma <b>15g de açúcar rápido</b> agora (1 colher de sopa de mel ou açúcar, ou 1 copo pequeno de suco). Espere 15 minutos e meça de novo.` };
+  if(v < c.baixo) return { cor:'amarelo', tipo:'comer', titulo:'Coma algo antes de correr',
+    texto:`Coma <b>15 a 30g de carboidrato</b> (uma fruta, um pão ou uma torrada). Espere 15 minutos e meça de novo.` };
+  if(v <= c.alto) return { cor:'verde', tipo:'ok', titulo:'Pode correr! Bom treino 🏃',
+    texto:'Leve o açúcar rápido no bolso, por garantia.' };
+  if(v <= c.muitoAlto) return { cor:'laranja', tipo:'alto', titulo:'Glicose alta',
+    texto: c.insulina
+      ? 'Como você usa insulina, <b>cheque as cetonas</b> antes. Se deram negativo, pode fazer um treino leve. Se deram positivo ou não tem como checar, faça só uma caminhada leve hoje e beba água.'
+      : 'Hoje prefira <b>uma caminhada leve</b> em vez de correr, e beba bastante água.' };
+  return { cor:'vermelho', tipo:'naocorrer', titulo:'Hoje não corra',
+    texto:'Glicose muito alta. Beba água e descanse. Meça de novo daqui a pouco — se não baixar, <b>fale com o médico</b>.' };
+}
+
+// Avaliação para uma medida qualquer (tela inicial)
+function vereditoGeral(v){
+  const k = cor(v), c = D.cfg;
+  if(v < c.hipo) return { cor:k, titulo:'Glicose baixa!', texto:'Siga o plano de glicose baixa agora.' };
+  if(v < c.baixo) return { cor:k, titulo:'Um pouco baixa', texto:'Fique atento. Se for fazer exercício, coma algo antes.' };
+  if(v <= c.alto) return { cor:k, titulo:'Na faixa 👍', texto:'Tudo certo.' };
+  if(v <= c.muitoAlto) return { cor:k, titulo:'Alta', texto:'Beba água e fique atento. Siga a orientação do seu médico.' };
+  return { cor:k, titulo:'Muito alta', texto:'Beba água. Se continuar alta nas próximas medidas, fale com o médico.' };
+}
+
+function registrar(v, m){
+  D.glicemias.push({ t: agora(), v, m });
+  salvar();
+}
+
+/* ---------- WhatsApp / localização ---------- */
+function telWa(){
+  let t = (D.cfg.contatoTel || '').replace(/\D/g, '');
+  if(t.length === 10 || t.length === 11) t = '55' + t;
+  return t;
+}
+function pedirAjuda(motivo){
+  if(!telWa()){ toast('Cadastre um contato da família em Ajustes.'); aba = 'ajustes'; render(); return; }
+  const nome = D.cfg.nome ? D.cfg.nome : 'Eu';
+  const ultima = D.glicemias[D.glicemias.length - 1];
+  const base = `🆘 ${nome}: ${motivo}.` + (ultima ? ` Última glicose: ${ultima.v} mg/dL às ${hora(ultima.t)}.` : '');
+  const abrir = (txt) => { location.href = `https://wa.me/${telWa()}?text=${encodeURIComponent(txt)}`; };
+  if(!navigator.geolocation){ abrir(base); return; }
+  toast('Pegando sua localização…');
+  navigator.geolocation.getCurrentPosition(
+    (p) => abrir(`${base} Estou aqui: https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`),
+    () => abrir(base),
+    { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
+  );
+}
+
+/* ---------- avisos (notificação) ---------- */
+async function avisar(titulo, corpo){
+  try{ navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]); }catch(e){}
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      const reg = await navigator.serviceWorker?.getRegistration();
+      if(reg) reg.showNotification(titulo, { body: corpo, icon: 'icon-192.png', tag: 'glicose' });
+      else new Notification(titulo, { body: corpo });
+    }
+  }catch(e){}
+}
+
+/* ---------- lembretes na agenda do celular ---------- */
+function eventosLembrete(){
+  const c = D.cfg;
+  const menos = (hhmm, min) => {
+    const [h, m] = hhmm.split(':').map(Number);
+    const t = (h * 60 + m - min + 1440) % 1440;
+    return `${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`;
+  };
+  return [
+    { hora: menos(c.horaCorrida, 30), titulo: '🩸 Meça a glicose antes da corrida',
+      desc: 'Abra o app Minha Glicose e faça o checklist. Se estiver abaixo de ' + c.baixo + ', coma algo agora.' },
+    { hora: c.horaCorrida, titulo: '🏃 Hora da corrida!',
+      desc: 'Leve açúcar rápido, celular e água. Abra o app e toque em Corrida.' },
+    { hora: c.horaDormir, titulo: '🌙 Meça a glicose antes de dormir',
+      desc: 'A glicose pode cair horas depois do exercício, até de madrugada. Se estiver baixa, coma um lanche.' }
+  ];
+}
+function baixarIcs(){
+  const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+  const ymd = `${amanha.getFullYear()}${String(amanha.getMonth()+1).padStart(2,'0')}${String(amanha.getDate()).padStart(2,'0')}`;
+  const fim = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); const t = (h * 60 + m + 10) % 1440;
+    return `${String(Math.floor(t/60)).padStart(2,'0')}${String(t%60).padStart(2,'0')}00`; };
+  const txt = (s) => s.replace(/[\\;,]/g, (x) => '\\' + x);
+  const linhas = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Minha Glicose//PT-BR','CALSCALE:GREGORIAN'];
+  eventosLembrete().forEach((e, i) => {
+    const hms = e.hora.replace(':', '') + '00';
+    linhas.push('BEGIN:VEVENT',
+      `UID:minha-glicose-lembrete-${i}@minha-glicose`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'')}`,
+      `DTSTART:${ymd}T${hms}`, `DTEND:${ymd}T${fim(e.hora)}`,
+      'RRULE:FREQ=DAILY',
+      `SUMMARY:${txt(e.titulo)}`, `DESCRIPTION:${txt(e.desc)}`,
+      'BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${txt(e.titulo)}`,'TRIGGER:PT0M','END:VALARM',
+      'END:VEVENT');
+  });
+  linhas.push('END:VCALENDAR');
+  const blob = new Blob([linhas.join('\r\n')], { type: 'text/calendar' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'lembretes-glicose.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function linkGoogle(e){
+  const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+  const ymd = `${amanha.getFullYear()}${String(amanha.getMonth()+1).padStart(2,'0')}${String(amanha.getDate()).padStart(2,'0')}`;
+  const [h, m] = e.hora.split(':').map(Number);
+  const f = (h * 60 + m + 10) % 1440;
+  const ini = `${ymd}T${String(h).padStart(2,'0')}${String(m).padStart(2,'0')}00`;
+  const fim = `${ymd}T${String(Math.floor(f/60)).padStart(2,'0')}${String(f%60).padStart(2,'0')}00`;
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + `&text=${encodeURIComponent(e.titulo)}&details=${encodeURIComponent(e.desc)}`
+    + `&dates=${ini}/${fim}&ctz=${encodeURIComponent(tz)}&recur=${encodeURIComponent('RRULE:FREQ=DAILY')}`;
+}
+
+/* =========================================================
+   TELAS
+   ========================================================= */
+function telaInicio(){
+  const c = D.cfg;
+  const ult = D.glicemias[D.glicemias.length - 1];
+  const corridaHoje = D.corridas.filter((r) => hojeStr(r.inicio) === hojeStr()).pop();
+  const momentos = ['Jejum','Antes de comer','2h depois de comer','Antes de dormir','Outro'];
+  const saud = new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite';
+
+  let html = `<h1>${saud}${c.nome ? ', ' + esc(c.nome) : ''}!</h1>`;
+
+  html += `<div class="card">
+    <h2>Anotar glicose</h2>
+    <input id="gl" class="grande" type="number" inputmode="numeric" placeholder="mg/dL" autocomplete="off">
+    <div class="chips">${momentos.map((m) => `<button class="chip ${momentoSel === m ? 'on' : ''}" data-momento="${m}">${m}</button>`).join('')}</div>
+    <button id="salvarGl">Salvar</button>
+    ${ult ? `<p class="muted" style="margin-top:12px">Última: <b class="t-${cor(ult.v)}">${ult.v}</b> — ${dia(ult.t)} às ${hora(ult.t)}${ult.m ? ' (' + esc(ult.m) + ')' : ''}</p>` : ''}
+  </div>`;
+
+  // Corrida do dia
+  if(D.run && D.run.etapa !== 'fim'){
+    html += `<div class="card"><h2>🏃 Corrida em andamento</h2><button data-aba="corrida">Voltar para a corrida</button></div>`;
+  }else if(corridaHoje){
+    html += `<div class="card"><h2>✅ Corrida de hoje feita</h2>
+      <p>Glicose: <b>${corridaHoje.antes ?? '—'}</b> antes → <b>${corridaHoje.depois ?? '—'}</b> depois.</p>
+      <div class="aviso amarelo"><b>🌙 Lembre de medir antes de dormir (${esc(c.horaDormir)}).</b>
+      A glicose pode cair horas depois do exercício.</div></div>`;
+  }else{
+    html += `<div class="card"><h2>🏃 Corrida de hoje — ${esc(c.horaCorrida)}</h2>
+      <p class="muted">Antes de sair, faça o checklist.</p>
+      <button data-aba="corrida">Vou correr agora</button></div>`;
+  }
+
+  html += `<button class="sos" data-sobre="hipo">⚠️ Estou com a glicose baixa</button>
+    <button class="sec" data-sobre="ficha">🆘 Ficha de emergência</button>`;
+  return html;
+}
+
+function telaCorrida(){
+  const r = D.run, c = D.cfg;
+
+  if(!r || r.etapa === 'antes'){
+    const antes = r?.antes;
+    const ver = antes ? vereditoCorrida(antes) : null;
+    const itens = [
+      ['acucar', 'Levo açúcar rápido (sachê de mel, bala ou suquinho)'],
+      ['celular', 'Levo o celular e água'],
+      ['ficha', 'Levo identificação de diabético (ou a ficha do app)'],
+      ['tenis', 'Tênis confortável e meia sem costura'],
+      ...(c.insulina ? [['insulina', 'Não apliquei insulina nas pernas antes de correr']] : [])
+    ];
+    const ch = r?.checks || {};
+    const todos = itens.every(([k]) => ch[k]);
+    const podeCorrer = ver && (ver.tipo === 'ok' || (ver.tipo === 'alto' && (r?.cetonasOk || r?.soCaminhar)));
+
+    let html = `<h1>Antes de correr</h1>
+      <div class="card"><h2>1. Meça a glicose</h2>
+        <input id="glAntes" class="grande" type="number" inputmode="numeric" placeholder="mg/dL" value="${antes || ''}">
+        <button id="conferir">Conferir</button>`;
+    if(ver){
+      html += `<div class="aviso ${ver.cor}"><b class="big">${ver.titulo}</b>${ver.texto}</div>`;
+      if(ver.tipo === 'hipo' || ver.tipo === 'comer')
+        html += `<button id="esperar">Já comi — esperar 15 minutos</button>`;
+      if(ver.tipo === 'alto'){
+        if(c.insulina) html += `<label class="check"><input type="checkbox" id="cetonas" ${r.cetonasOk ? 'checked' : ''}> Chequei as cetonas e deu negativo</label>`;
+        html += `<label class="check"><input type="checkbox" id="caminhar" ${r.soCaminhar ? 'checked' : ''}> Vou fazer só uma caminhada leve</label>`;
+      }
+      if(ver.tipo === 'naocorrer')
+        html += `<button class="sec" id="medirDeNovo">Medir de novo</button>`;
+    }
+    html += `</div>
+      <div class="card"><h2>2. Checklist</h2>
+        ${itens.map(([k, t]) => `<label class="check"><input type="checkbox" data-check="${k}" ${ch[k] ? 'checked' : ''}> ${t}</label>`).join('')}
+      </div>
+      <button id="comecar" ${podeCorrer && todos ? '' : 'disabled'}>${
+        !ver ? 'Meça a glicose primeiro'
+        : !podeCorrer ? 'Ainda não dá pra sair'
+        : !todos ? 'Marque todo o checklist'
+        : (r?.soCaminhar && !r?.cetonasOk ? 'Começar caminhada' : 'Começar corrida')}</button>
+      ${r ? '<button class="sec" id="cancelar">Hoje não vou</button>' : ''}`;
+    return html;
+  }
+
+  if(r.etapa === 'esperando'){
+    const falta = r.esperaAte - agora();
+    return `<h1>Esperando o açúcar fazer efeito</h1>
+      <div class="card" style="text-align:center">
+        <p>Meça a glicose de novo em</p>
+        <div class="timer" data-conta="${r.esperaAte}">${mmss(falta)}</div>
+        <p class="muted">Deixe o app aberto que ele avisa.</p>
+        <button id="remedir">${falta > 0 ? 'Medir antes' : 'Medir agora'}</button>
+        <button class="sos" id="socorro">🆘 Estou passando mal</button>
+      </div>`;
+  }
+
+  if(r.etapa === 'correndo'){
+    return `<h1>${r.soCaminhar ? 'Caminhando' : 'Correndo'} 🏃</h1>
+      <div class="card" style="text-align:center">
+        <div class="timer" data-desde="${r.inicio}">${mmss(agora() - r.inicio)}</div>
+        <button id="terminei">Terminei</button>
+      </div>
+      <div class="aviso vermelho"><b class="big">Sentiu tremor, suor frio, tontura ou confusão?</b>
+        <b>Pare na hora</b> e coma o açúcar que está no bolso. Sente e espere 15 minutos.</div>
+      <button class="sos" id="socorro">🆘 Estou passando mal — avisar a família</button>`;
+  }
+
+  if(r.etapa === 'depois'){
+    const medirEm = r.fim + c.esperaDepois * 60000;
+    const falta = medirEm - agora();
+    return `<h1>Muito bem! 🎉</h1>
+      <div class="card"><p>Você ${r.soCaminhar ? 'caminhou' : 'correu'} por <b>${mmss(r.fim - r.inicio)}</b>.</p>
+        <label for="km">Distância (km) — opcional</label>
+        <input id="km" type="number" inputmode="decimal" step="0.1" value="${r.km ?? ''}">
+      </div>
+      <div class="card"><h2>Meça a glicose de novo</h2>
+        ${falta > 0 ? `<p>O ideal é medir daqui a</p><div class="timer" data-conta="${medirEm}">${mmss(falta)}</div>` : '<p><b>Já pode medir.</b></p>'}
+        <input id="glDepois" class="grande" type="number" inputmode="numeric" placeholder="mg/dL">
+        <button id="salvarDepois">Salvar corrida</button>
+      </div>`;
+  }
+
+  if(r.etapa === 'fim'){
+    const ult = D.corridas[D.corridas.length - 1];
+    const queda = ult.antes && ult.depois ? ult.antes - ult.depois : null;
+    const ver = ult.depois ? vereditoGeral(ult.depois) : null;
+    return `<h1>Corrida salva ✅</h1>
+      <div class="card">
+        <p>Glicose: <b>${ult.antes ?? '—'}</b> antes → <b class="t-${cor(ult.depois)}">${ult.depois}</b> depois.</p>
+        ${queda !== null ? `<p>${queda >= 0 ? 'Caiu' : 'Subiu'} <b>${Math.abs(queda)}</b> mg/dL.</p>` : ''}
+        ${ver ? `<div class="aviso ${ver.cor}"><b class="big">${ver.titulo}</b>${ver.texto}</div>` : ''}
+        ${ult.depois < c.hipo ? '<button class="sos" data-sobre="hipo">Abrir plano de glicose baixa</button>' : ''}
+      </div>
+      <div class="card"><h2>Agora não esqueça</h2>
+        <label class="check"><input type="checkbox"> 👣 Olhei os pés: sem bolhas, cortes ou vermelhidão</label>
+        <label class="check"><input type="checkbox"> 💧 Bebi água</label>
+        <div class="aviso amarelo"><b>🌙 Meça a glicose antes de dormir (${esc(c.horaDormir)}).</b>
+          A glicose pode cair horas depois do exercício, até de madrugada.</div>
+      </div>
+      <button id="fechar">Pronto</button>`;
+  }
+  return '';
+}
+
+function telaHistorico(){
+  const c = D.cfg;
+  const comAmbos = D.corridas.filter((r) => r.antes && r.depois);
+  const media = comAmbos.length ? Math.round(comAmbos.reduce((s, r) => s + (r.antes - r.depois), 0) / comAmbos.length) : null;
+  const ult30 = D.glicemias.filter((g) => g.t > agora() - 30 * 864e5);
+  const na = ult30.filter((g) => g.v >= c.hipo && g.v <= c.alto).length;
+
+  let html = `<h1>Histórico</h1><div class="card"><h2>Resumo</h2>`;
+  if(media !== null) html += `<p>Em média, sua glicose <b>${media >= 0 ? 'cai' : 'sobe'} ${Math.abs(media)} mg/dL</b> depois de correr (${comAmbos.length} corrida${comAmbos.length > 1 ? 's' : ''}).</p>`;
+  if(ult30.length) html += `<p>Últimos 30 dias: <b>${Math.round(na / ult30.length * 100)}%</b> das medidas entre ${c.hipo} e ${c.alto}. Média <b>${Math.round(ult30.reduce((s, g) => s + g.v, 0) / ult30.length)}</b>.</p>`;
+  if(!ult30.length && media === null) html += `<p class="muted">Ainda não tem registros. Eles vão aparecendo aqui.</p>`;
+  html += `<button class="sec" id="relatorio">Enviar resumo pro médico</button></div>`;
+
+  if(D.corridas.length){
+    html += `<div class="card"><h2>Corridas</h2><ul class="lista">` +
+      D.corridas.slice(-20).reverse().map((r) => `<li>
+        <div class="info"><b>${dia(r.inicio)}</b> às ${hora(r.inicio)} · ${mmss((r.fim || r.inicio) - r.inicio)}${r.km ? ' · ' + esc(r.km) + ' km' : ''}${r.caminhada ? ' · caminhada' : ''}<br>
+        <span class="muted">Glicose ${r.antes ?? '—'} → ${r.depois ?? '—'}</span></div></li>`).join('') + `</ul></div>`;
+  }
+  if(D.glicemias.length){
+    html += `<div class="card"><h2>Medidas</h2><ul class="lista">` +
+      D.glicemias.slice(-60).map((g, i, arr) => ({ g, idx: D.glicemias.length - arr.length + i })).reverse().map(({ g, idx }) => `<li>
+        <span class="num t-${cor(g.v)}">${g.v}</span>
+        <div class="info">${dia(g.t)} às ${hora(g.t)}<br><span class="muted">${esc(g.m || '')}</span></div>
+        <button class="mini" data-apagar="${idx}">apagar</button></li>`).join('') + `</ul></div>`;
+  }
+  html += `<div class="card"><h2>Cópia de segurança</h2>
+    <p class="muted">Os dados ficam só neste celular. Faça uma cópia de vez em quando (ou antes de trocar de celular).</p>
+    <button class="sec" id="exportar">Baixar cópia</button>
+    <label for="importar">Restaurar uma cópia</label><input id="importar" type="file" accept="application/json,.json"></div>`;
+  return html;
+}
+
+function telaAjustes(){
+  const c = D.cfg;
+  const campo = (k, rot, tipo = 'text', extra = '') =>
+    `<label for="c_${k}">${rot}</label><input id="c_${k}" data-cfg="${k}" type="${tipo}" value="${esc(c[k])}" ${extra}>`;
+  const area = (k, rot) => `<label for="c_${k}">${rot}</label><textarea id="c_${k}" data-cfg="${k}" rows="2">${esc(c[k])}</textarea>`;
+  const permNotif = 'Notification' in window ? Notification.permission : 'indisponivel';
+
+  return `<h1>Ajustes</h1>
+  <div class="card"><h2>Você</h2>
+    ${campo('nome', 'Seu nome')}
+    <label class="check"><input type="checkbox" data-cfg="insulina" ${c.insulina ? 'checked' : ''}> Uso insulina</label>
+  </div>
+
+  <div class="card"><h2>Horários e lembretes</h2>
+    <div class="linha"><div>${campo('horaCorrida', 'Corrida', 'time')}</div><div>${campo('horaDormir', 'Dormir', 'time')}</div></div>
+    <p class="muted" style="margin-top:12px">O celular só avisa com o app fechado se os lembretes estiverem na agenda. Toque abaixo uma vez (e de novo se mudar os horários):</p>
+    <button id="ics">📅 Colocar lembretes na agenda (iPhone)</button>
+    <details style="margin-top:10px"><summary style="font-weight:700;cursor:pointer;padding:8px 0">Android / Google Agenda</summary>
+      <p class="muted">Toque em cada um e depois em “Salvar”. Eles se repetem todo dia.</p>
+      ${eventosLembrete().map((e) => `<a class="btn sec" target="_blank" rel="noopener" href="${linkGoogle(e)}">${esc(e.hora)} — ${esc(e.titulo)}</a>`).join('')}
+    </details>
+    ${permNotif === 'default' ? '<button class="sec" id="notif">🔔 Permitir avisos do app</button>' : ''}
+  </div>
+
+  <div class="card"><h2>Contato da família</h2>
+    <p class="muted">Recebe a mensagem do botão “Estou passando mal”.</p>
+    ${campo('contatoNome', 'Nome')}
+    ${campo('contatoTel', 'WhatsApp (com DDD)', 'tel', 'inputmode="tel" placeholder="(11) 91234-5678"')}
+  </div>
+
+  <div class="card"><h2>Faixas de glicose (mg/dL)</h2>
+    <div class="aviso amarelo">⚠️ Estes números são padrões gerais. <b>Confirme com o médico</b> e ajuste aqui.</div>
+    <div class="linha"><div>${campo('hipo', 'Baixa (hipo) abaixo de', 'number', 'inputmode="numeric"')}</div>
+      <div>${campo('baixo', 'Comer antes de correr abaixo de', 'number', 'inputmode="numeric"')}</div></div>
+    <div class="linha"><div>${campo('alto', 'Alta acima de', 'number', 'inputmode="numeric"')}</div>
+      <div>${campo('muitoAlto', 'Não correr acima de', 'number', 'inputmode="numeric"')}</div></div>
+    ${campo('esperaDepois', 'Medir quantos minutos depois de correr', 'number', 'inputmode="numeric"')}
+  </div>
+
+  <div class="card"><h2>Ficha de emergência</h2>
+    ${campo('tipo', 'Tipo de diabetes', 'text', 'placeholder="Ex.: tipo 2"')}
+    ${area('remedios', 'Remédios / insulina que usa')}
+    ${area('alergias', 'Alergias')}
+    ${campo('medico', 'Médico e telefone')}
+    ${area('obs', 'Outras informações')}
+    <button class="sec" data-sobre="ficha">Ver ficha</button>
+  </div>
+
+  <p class="muted">Este app ajuda a registrar, lembrar e avisar. Ele não substitui o médico — as decisões sobre remédios e doses são sempre com ele.</p>`;
+}
+
+/* ---------- sobreposições ---------- */
+function telaFicha(){
+  const c = D.cfg;
+  const l = (r, v) => v ? `<p><b>${r}:</b> ${esc(v)}</p>` : '';
+  const ult = D.glicemias[D.glicemias.length - 1];
+  return `<main>
+    <div class="aviso vermelho"><b class="big">🆘 ${c.nome ? esc(c.nome) + ' — ' : ''}TENHO DIABETES</b>
+      Se eu estiver confuso, suando frio ou desmaiado, posso estar com <b>glicose baixa</b>.
+      Se eu conseguir engolir, me dê <b>açúcar, mel ou suco</b>. Se não, chame o <b>SAMU (192)</b>.</div>
+    <div class="card kv" style="margin-top:14px">
+      ${l('Tipo', c.tipo)}${l('Usa insulina', c.insulina ? 'Sim' : '')}${l('Remédios', c.remedios)}${l('Alergias', c.alergias)}
+      ${l('Médico', c.medico)}${l('Contato', [c.contatoNome, c.contatoTel].filter(Boolean).join(' — '))}${l('Obs.', c.obs)}
+      ${ult ? `<p><b>Última glicose:</b> ${ult.v} mg/dL (${dia(ult.t)} ${hora(ult.t)})</p>` : ''}
+    </div>
+    <a class="btn sos" href="tel:192" style="background:var(--bad);color:#fff">📞 Ligar para o SAMU (192)</a>
+    ${c.contatoTel ? `<a class="btn sec" href="tel:${esc(c.contatoTel.replace(/[^\d+]/g, ''))}">📞 Ligar para ${esc(c.contatoNome || 'o contato')}</a>` : ''}
+    <button class="sec" data-fechar>Fechar</button>
+  </main>`;
+}
+function telaHipo(){
+  return `<main>
+    <h1>Glicose baixa — faça agora:</h1>
+    <div class="card">
+      <p style="font-size:1.25rem"><b>1.</b> Coma <b>15g de açúcar rápido</b>:<br>
+      1 colher de sopa de açúcar ou mel, <b>ou</b> 1 copo pequeno (150ml) de suco ou refrigerante comum (não diet).</p>
+      <p style="font-size:1.25rem"><b>2.</b> Sente e espere <b>15 minutos</b>.</p>
+      <p style="font-size:1.25rem"><b>3.</b> Meça de novo. Se ainda estiver abaixo de ${D.cfg.hipo}, repita.</p>
+      <p style="font-size:1.25rem"><b>4.</b> Quando melhorar, faça um lanche.</p>
+    </div>
+    ${hipoAte ? `<div class="card" style="text-align:center"><p>Medir de novo em</p><div class="timer" data-conta="${hipoAte}">${mmss(hipoAte - agora())}</div></div>`
+      : `<button id="hipoTimer">Já comi — contar 15 minutos</button>`}
+    <button class="sos" id="socorro">🆘 Avisar a família no WhatsApp</button>
+    <a class="btn sec" href="tel:192">📞 Ligar para o SAMU (192)</a>
+    <button class="sec" data-fechar>Fechar</button>
+  </main>`;
+}
+
+/* =========================================================
+   RENDER E EVENTOS
+   ========================================================= */
+function render(){
+  const telas = { inicio: telaInicio, corrida: telaCorrida, historico: telaHistorico, ajustes: telaAjustes };
+  $('#app').innerHTML = telas[aba]();
+  const abas = [['inicio','🏠','Início'], ['corrida','🏃','Corrida'], ['historico','📊','Histórico'], ['ajustes','⚙️','Ajustes']];
+  $('#nav').innerHTML = abas.map(([k, i, t]) => `<button class="${aba === k ? 'on' : ''}" data-aba="${k}"><span>${i}</span>${t}</button>`).join('');
+  $('#sobre').innerHTML = sobre ? `<div class="sobre">${sobre === 'ficha' ? telaFicha() : telaHipo()}</div>` : '';
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('button, [data-aba], [data-sobre]');
+  if(!el) return;
+  const d = el.dataset;
+
+  if(d.aba){ aba = d.aba; render(); scrollTo(0, 0); return; }
+  if(d.sobre){
+    if(d.sobre === 'hipo' && hipoAte && hipoAte < agora()) hipoAte = null;
+    sobre = d.sobre; render(); return;
+  }
+  if('fechar' in d){ sobre = null; render(); return; }
+  if(d.momento){ momentoSel = momentoSel === d.momento ? null : d.momento; const v = $('#gl').value; render(); $('#gl').value = v; return; }
+  if(d.apagar !== undefined){
+    if(confirm('Apagar esta medida?')){ D.glicemias.splice(+d.apagar, 1); salvar(); render(); }
+    return;
+  }
+
+  switch(el.id){
+    case 'salvarGl': {
+      const v = numero('#gl'); if(!v) return;
+      registrar(v, momentoSel || '');
+      momentoSel = null;
+      const ver = vereditoGeral(v);
+      if(v < D.cfg.hipo){ sobre = 'hipo'; render(); return; }
+      render();
+      $('#app').insertAdjacentHTML('afterbegin', `<div class="aviso ${ver.cor}" style="margin:0 0 14px"><b class="big">${v} — ${ver.titulo}</b>${ver.texto}</div>`);
+      return;
+    }
+    case 'conferir': {
+      const v = numero('#glAntes'); if(!v) return;
+      D.run = { ...(D.run || { checks: {} }), etapa: 'antes', antes: v, cetonasOk: false, soCaminhar: false };
+      registrar(v, 'Antes da corrida');
+      render(); return;
+    }
+    case 'esperar': case 'hipoTimer': {
+      const ate = agora() + 15 * 60000;
+      if(el.id === 'hipoTimer'){ hipoAte = ate; }
+      else { D.run.etapa = 'esperando'; D.run.esperaAte = ate; salvar(); }
+      render(); return;
+    }
+    case 'remedir': D.run.etapa = 'antes'; D.run.antes = null; salvar(); render(); return;
+    case 'medirDeNovo': D.run.antes = null; salvar(); render(); return;
+    case 'comecar':
+      D.run.etapa = 'correndo'; D.run.inicio = agora(); salvar(); render(); return;
+    case 'cancelar': D.run = null; salvar(); aba = 'inicio'; render(); return;
+    case 'terminei':
+      if(!confirm('Terminou?')) return;
+      D.run.etapa = 'depois'; D.run.fim = agora(); salvar(); render(); return;
+    case 'salvarDepois': {
+      const v = numero('#glDepois'); if(!v) return;
+      const r = D.run;
+      const km = parseFloat(($('#km').value || '').replace(',', '.'));
+      D.corridas.push({ inicio: r.inicio, fim: r.fim, antes: r.antes || null, depois: v, km: km > 0 ? km : null, caminhada: !!r.soCaminhar && !r.cetonasOk });
+      registrar(v, 'Depois da corrida');
+      D.run = { etapa: 'fim' }; salvar(); render(); scrollTo(0, 0); return;
+    }
+    case 'fechar': D.run = null; salvar(); aba = 'inicio'; render(); return;
+    case 'socorro': pedirAjuda(D.run?.etapa === 'correndo' ? 'estou passando mal durante a corrida' : 'estou com a glicose baixa / passando mal'); return;
+    case 'ics': baixarIcs(); return;
+    case 'notif': Notification.requestPermission().then(render); return;
+    case 'relatorio': compartilharResumo(); return;
+    case 'exportar': exportar(); return;
+  }
+});
+
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if(el.dataset.check){
+    D.run = D.run || { etapa: 'antes', checks: {} };
+    D.run.checks[el.dataset.check] = el.checked; salvar(); render(); return;
+  }
+  if(el.id === 'cetonas'){ D.run.cetonasOk = el.checked; salvar(); render(); return; }
+  if(el.id === 'caminhar'){ D.run.soCaminhar = el.checked; salvar(); render(); return; }
+  if(el.dataset.cfg){
+    const k = el.dataset.cfg;
+    let v = el.type === 'checkbox' ? el.checked : el.value;
+    if(el.type === 'number'){ v = parseInt(v, 10); if(!(v > 0)){ el.value = D.cfg[k]; return; } }
+    if(el.type === 'time' && !v){ el.value = D.cfg[k]; return; }
+    D.cfg[k] = v; salvar(); toast('Salvo ✓');
+    if(k === 'horaCorrida' || k === 'horaDormir') toast('Salvo ✓ — coloque os lembretes na agenda de novo');
+    if(el.type === 'checkbox' || el.type === 'time') render();
+    return;
+  }
+  if(el.id === 'km' && D.run){ D.run.km = el.value; salvar(); return; }
+  if(el.id === 'importar' && el.files[0]) importar(el.files[0]);
+});
+
+/* ---------- resumo / cópia ---------- */
+function compartilharResumo(){
+  const c = D.cfg, g = D.glicemias.filter((x) => x.t > agora() - 30 * 864e5);
+  const r = D.corridas.filter((x) => x.inicio > agora() - 30 * 864e5);
+  let t = `Resumo de glicose — últimos 30 dias${c.nome ? ' — ' + c.nome : ''}\n`;
+  if(g.length){
+    const vs = g.map((x) => x.v);
+    t += `Medidas: ${g.length} · média ${Math.round(vs.reduce((a, b) => a + b, 0) / vs.length)} · menor ${Math.min(...vs)} · maior ${Math.max(...vs)}\n`;
+    t += `Abaixo de ${c.hipo}: ${vs.filter((v) => v < c.hipo).length}x · Acima de ${c.alto}: ${vs.filter((v) => v > c.alto).length}x\n`;
+  }
+  if(r.length){
+    const ab = r.filter((x) => x.antes && x.depois);
+    t += `Corridas: ${r.length}` + (ab.length ? ` · queda média ${Math.round(ab.reduce((s, x) => s + x.antes - x.depois, 0) / ab.length)} mg/dL` : '') + '\n';
+  }
+  t += '\nMedidas:\n' + g.slice().reverse().map((x) => `${new Date(x.t).toLocaleDateString('pt-BR')} ${hora(x.t)} — ${x.v}${x.m ? ' (' + x.m + ')' : ''}`).join('\n');
+  if(navigator.share) navigator.share({ title: 'Resumo de glicose', text: t }).catch(() => {});
+  else navigator.clipboard?.writeText(t).then(() => toast('Resumo copiado. Cole no WhatsApp do médico.'));
+}
+function exportar(){
+  const blob = new Blob([JSON.stringify(D, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `glicose-copia-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function importar(arq){
+  arq.text().then((s) => {
+    const x = JSON.parse(s);
+    if(!x || !Array.isArray(x.glicemias)) throw 0;
+    if(!confirm('Isso substitui os dados atuais pelos da cópia. Continuar?')) return;
+    D = { ...PADRAO, ...x, cfg: { ...PADRAO.cfg, ...x.cfg } }; salvar(); render(); toast('Cópia restaurada ✓');
+  }).catch(() => toast('Arquivo inválido.'));
+}
+
+/* ---------- relógio: atualiza cronômetros e dispara avisos ---------- */
+const avisado = {};
+setInterval(() => {
+  document.querySelectorAll('[data-conta]').forEach((el) => {
+    const ate = +el.dataset.conta, falta = ate - agora();
+    el.textContent = mmss(falta);
+    if(falta <= 0 && !avisado[ate]){
+      avisado[ate] = true;
+      avisar('⏰ Hora de medir a glicose', 'Abra o app e anote o valor.');
+    }
+  });
+  document.querySelectorAll('[data-desde]').forEach((el) => { el.textContent = mmss(agora() - +el.dataset.desde); });
+}, 1000);
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if(D.run && D.run.etapa !== 'fim') aba = 'corrida';
+render();
+</script>
+</body>
+</html>
