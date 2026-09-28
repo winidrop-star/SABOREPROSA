@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#1D2A47"/>
+      <stop offset="0.6" stop-color="#111A2E"/>
+      <stop offset="1" stop-color="#080D19"/>
+    </radialGradient>
+    <linearGradient id="verde" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#059669"/>
+      <stop offset="0.55" stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#BEF264"/>
+    </linearGradient>
+    <linearGradient id="laranja" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#EA580C"/>
+      <stop offset="0.55" stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#FDE047"/>
+    </linearGradient>
+    <linearGradient id="anel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <filter id="brilhoVerde" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#22C55E" flood-opacity="0.45"/>
+    </filter>
+    <filter id="brilhoLaranja" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#F97316" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- fundo -->
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+
+  <!-- anel de progresso -->
+  <circle cx="256" cy="256" r="206" fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="12"/>
+  <circle cx="256" cy="256" r="206" fill="none" stroke="url(#anel)" stroke-width="12"
+          stroke-linecap="round" pathLength="100" stroke-dasharray="72 100"
+          transform="rotate(-90 256 256)"/>
+
+  <g transform="translate(256 256) scale(0.88) translate(-261 -248)">
+    <!-- W verde -->
+    <polyline transform="translate(111 200)" points="0,0 40,140 90,40 140,140 180,0"
+              fill="none" stroke="url(#verde)" stroke-width="34"
+              stroke-linejoin="round" stroke-linecap="round" filter="url(#brilhoVerde)"/>
+    <!-- recorte entre os dois W -->
+    <g transform="translate(221 176)" fill="none" stroke="#131D33" stroke-linejoin="round" stroke-linecap="round">
+      <polyline points="0,0 40,140 90,40 140,140 180,0" stroke-width="52"/>
+      <polygon points="192,-42 208,12 150,-5" stroke-width="18" fill="#131D33"/>
+    </g>
+    <!-- W laranja, terminando em seta -->
+    <g transform="translate(221 176)" filter="url(#brilhoLaranja)">
+      <polyline points="0,0 40,140 90,40 140,140 180,0"
+                fill="none" stroke="url(#laranja)" stroke-width="34"
+                stroke-linejoin="round" stroke-linecap="round"/>
+      <polygon points="192,-42 208,12 150,-5" fill="#FDE047"
+               stroke="#FDE047" stroke-width="8" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

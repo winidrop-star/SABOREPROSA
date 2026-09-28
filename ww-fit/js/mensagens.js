@@ -1,0 +1,185 @@
+// Mensagem do dia: um versículo + uma frase motivacional.
+// Script "clássico" (não é módulo) para poder ser usado também pelo service
+// worker (importScripts). Cada lista gira pelo dia; como os tamanhos das
+// duas são diferentes, a dupla versículo + frase muda todo dia e demora anos
+// para se repetir. Para acrescentar mensagens, é só adicionar linhas.
+(function (root) {
+  var VERSICULOS = [
+    ['Tudo posso naquele que me fortalece.', 'Filipenses 4:13'],
+    ['Mas os que esperam no Senhor renovarão as suas forças; subirão com asas como águias; correrão e não se cansarão; caminharão e não se fatigarão.', 'Isaías 40:31'],
+    ['Sê forte e corajoso; não temas, nem te espantes, porque o Senhor, teu Deus, é contigo por onde quer que andares.', 'Josué 1:9'],
+    ['Não sabeis que o vosso corpo é o templo do Espírito Santo, que habita em vós? Glorificai, pois, a Deus no vosso corpo.', '1 Coríntios 6:19-20'],
+    ['E não nos cansemos de fazer o bem, porque a seu tempo ceifaremos, se não houvermos desfalecido.', 'Gálatas 6:9'],
+    ['As misericórdias do Senhor são a causa de não sermos consumidos; novas são cada manhã. Grande é a tua fidelidade.', 'Lamentações 3:22-23'],
+    ['Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.', 'Salmos 118:24'],
+    ['Confia ao Senhor as tuas obras, e teus pensamentos serão estabelecidos.', 'Provérbios 16:3'],
+    ['Melhor é serem dois do que um. Porque, se um cair, o outro levanta o seu companheiro.', 'Eclesiastes 4:9-10'],
+    ['O cordão de três dobras não se quebra tão depressa.', 'Eclesiastes 4:12'],
+    ['Quer comais, quer bebais, ou façais outra qualquer coisa, fazei tudo para glória de Deus.', '1 Coríntios 10:31'],
+    ['Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia.', 'Salmos 46:1'],
+    ['Alegrai-vos na esperança, sede pacientes na tribulação, perseverai na oração.', 'Romanos 12:12'],
+    ['Corramos, com perseverança, a carreira que nos está proposta.', 'Hebreus 12:1'],
+    ['Aquele que em vós começou a boa obra a aperfeiçoará.', 'Filipenses 1:6'],
+    ['Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento. Reconhece-o em todos os teus caminhos, e ele endireitará as tuas veredas.', 'Provérbios 3:5-6'],
+    ['Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.', 'Salmos 37:5'],
+    ['Porque Deus não nos deu o espírito de temor, mas de fortaleza, e de amor, e de moderação.', '2 Timóteo 1:7'],
+    ['Não temas, porque eu sou contigo; não te assombres, porque eu sou teu Deus; eu te fortaleço, e te ajudo.', 'Isaías 41:10'],
+    ['Não vos inquieteis, pois, pelo dia de amanhã. Basta a cada dia o seu mal.', 'Mateus 6:34'],
+    ['Faze-me ouvir a tua benignidade pela manhã, pois em ti confio.', 'Salmos 143:8'],
+    ['A alegria do Senhor é a vossa força.', 'Neemias 8:10'],
+    ['O coração alegre é como o bom remédio.', 'Provérbios 17:22'],
+    ['Amado, desejo que te vá bem em todas as coisas, e que tenhas saúde, assim como bem vai a tua alma.', '3 João 1:2'],
+    ['E tudo quanto fizerdes, fazei-o de todo o coração, como ao Senhor.', 'Colossenses 3:23'],
+    ['A minha graça te basta, porque o meu poder se aperfeiçoa na fraqueza.', '2 Coríntios 12:9'],
+    ['O Senhor é o meu pastor; nada me faltará.', 'Salmos 23:1'],
+    ['Elevo os meus olhos para os montes. O meu socorro vem do Senhor, que fez o céu e a terra.', 'Salmos 121:1-2'],
+    ['Eis que faço uma coisa nova; agora sairá à luz.', 'Isaías 43:19'],
+    ['As coisas velhas já passaram; eis que tudo se fez novo.', '2 Coríntios 5:17'],
+    ['Bem-aventurado o homem que suporta a provação, porque, quando for aprovado, receberá a coroa da vida.', 'Tiago 1:12'],
+    ['Fiel é Deus, que vos não deixará tentar acima do que podeis.', '1 Coríntios 10:13'],
+    ['O fruto do Espírito é: amor, gozo, paz, longanimidade, benignidade, bondade, fé, mansidão, temperança.', 'Gálatas 5:22-23'],
+    ['Necessitais de paciência, para que, depois de haverdes feito a vontade de Deus, possais alcançar a promessa.', 'Hebreus 10:36'],
+    ['Todas as coisas contribuem juntamente para o bem daqueles que amam a Deus.', 'Romanos 8:28'],
+    ['Eu te louvarei, porque de um modo assombroso e tão maravilhoso fui feito.', 'Salmos 139:14'],
+    ['Esquecendo-me das coisas que atrás ficam e avançando para as que estão diante de mim, prossigo para o alvo.', 'Filipenses 3:13-14'],
+    ['Sobre tudo o que se deve guardar, guarda o teu coração, porque dele procedem as saídas da vida.', 'Provérbios 4:23'],
+    ['Tenho posto o Senhor continuamente diante de mim; por isso, não serei abalado.', 'Salmos 16:8'],
+    ['Vinde a mim, todos os que estais cansados e oprimidos, e eu vos aliviarei.', 'Mateus 11:28'],
+    ['Lançando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós.', '1 Pedro 5:7'],
+    ['Ensina-nos a contar os nossos dias, de tal maneira que alcancemos coração sábio.', 'Salmos 90:12'],
+    ['Os planos do diligente tendem à abundância.', 'Provérbios 21:5'],
+    ['Tu conservarás em paz aquele cuja mente está firme em ti, porque ele confia em ti.', 'Isaías 26:3'],
+    ['Provai e vede que o Senhor é bom.', 'Salmos 34:8'],
+    ['Deixo-vos a paz, a minha paz vos dou. Não se turbe o vosso coração, nem se atemorize.', 'João 14:27'],
+    ['O Deus de esperança vos encha de todo o gozo e paz.', 'Romanos 15:13'],
+    ['Com toda a humildade e mansidão, com longanimidade, suportando-vos uns aos outros em amor.', 'Efésios 4:2'],
+    ['O amor tudo sofre, tudo crê, tudo espera, tudo suporta.', '1 Coríntios 13:7'],
+    ['Acima de tudo, revesti-vos de amor, que é o vínculo da perfeição.', 'Colossenses 3:14'],
+    ['O Senhor é a minha luz e a minha salvação; a quem temerei?', 'Salmos 27:1'],
+    ['Esforçai-vos e animai-vos; o Senhor, teu Deus, é o que vai contigo; não te deixará, nem te desamparará.', 'Deuteronômio 31:6'],
+    ['Pela manhã ouvirás a minha voz, ó Senhor; pela manhã me apresentarei a ti.', 'Salmos 5:3'],
+    ['Como o ferro com o ferro se afia, assim o homem afia o seu amigo.', 'Provérbios 27:17'],
+    ['Ainda que eu tenha caído, levantar-me-ei.', 'Miqueias 7:8'],
+    ['O choro pode durar uma noite, mas a alegria vem pela manhã.', 'Salmos 30:5'],
+    ['O Senhor Deus é a minha força, e fará os meus pés como os das corças.', 'Habacuque 3:19'],
+    ['Dá força ao cansado e multiplica as forças ao que não tem nenhum vigor.', 'Isaías 40:29'],
+    ['Tenha a paciência a sua obra perfeita, para que sejais perfeitos e completos, sem faltar em coisa alguma.', 'Tiago 1:4'],
+    ['Os meus pensamentos não são os vossos pensamentos. Porque, assim como os céus são mais altos do que a terra, assim são os meus caminhos mais altos.', 'Isaías 55:8-9']
+  ];
+
+  var MOTIVACAO = [
+    'Um dia de cada vez. Hoje é só mais um passo — e passos somam.',
+    'Vocês não precisam ser perfeitos, só constantes.',
+    'A balança mede peso, não mede esforço. Continuem.',
+    'Beber água já é uma vitória. Comece por ela.',
+    'Disciplina é lembrar o que vocês querem de verdade.',
+    'Treino feito é treino que ninguém tira de vocês.',
+    'Quem caminha junto chega mais longe.',
+    'O corpo alcança o que a mente acredita.',
+    'Pequenas escolhas, repetidas todo dia, viram grandes resultados.',
+    'Não troque o que vocês mais querem pelo que querem agora.',
+    'Descanso também é parte do treino. Durmam bem.',
+    'Errou numa refeição? A próxima é uma nova chance.',
+    'Seu único adversário é quem você foi ontem.',
+    'Hoje vocês estão mais perto da meta do que ontem.',
+    'Motivação faz começar; hábito faz continuar.',
+    'Comida de verdade, prato colorido, corpo feliz.',
+    'Cada gota de suor é um investimento em saúde.',
+    'Um "toca aqui" hoje pode salvar o treino de amanhã. Incentive!',
+    'Progresso lento ainda é progresso.',
+    'Vocês são um time. Ninguém fica para trás.',
+    'O difícil de hoje é o normal de amanhã.',
+    'Faça hoje o que seu "eu" do futuro vai agradecer.',
+    'Não é dieta, é um novo estilo de vida.',
+    'Registre tudo: o que é medido, melhora.',
+    'Ansiedade bateu? Respire, beba água e caminhe 10 minutos.',
+    'Seu corpo é o único lugar onde você vai morar a vida inteira. Cuide bem.',
+    'Comemorem cada quilo. Cada um deles custou esforço.',
+    'Planejar as refeições é metade do caminho.',
+    'Sem pressa, sem pausa.',
+    'Um bom café da manhã começa um bom dia.',
+    'A força não vem do que vocês fazem, mas de superar o que achavam que não conseguiam.',
+    'Suba escada, estacione longe, dance na cozinha: tudo conta!',
+    'Foquem no progresso, não na perfeição.',
+    'Hoje é um ótimo dia para bater a meta de água.',
+    'Troque o "eu tenho que" por "eu posso". É um privilégio cuidar da saúde.',
+    'O cansaço passa. O orgulho de ter feito fica.',
+    'Coma devagar: o cérebro leva uns 20 minutos para sentir saciedade.',
+    'Vocês já provaram que conseguem começar. Agora é continuar.',
+    'Uma caminhada juntos vale por treino e por conversa.',
+    'Proteína em todas as refeições ajuda a segurar a fome.',
+    'Não compare o seu capítulo 1 com o capítulo 20 de ninguém.',
+    'Resultados vêm para quem não desiste na segunda semana.',
+    'Hoje, escolha um vegetal novo para colocar no prato.',
+    'Seja gentil consigo: dias ruins também fazem parte.',
+    'A meta é grande, mas o próximo passo é pequeno.',
+    'Força de vontade acaba; rotina não. Criem a rotina.',
+    'Mais cor no prato, menos pacote no carrinho.',
+    'Sua saúde é o presente mais bonito que vocês dão um ao outro.',
+    'Levantou cedo? Metade da batalha já foi vencida.',
+    'Aquele doce vai passar em 5 minutos. O resultado fica.',
+    'Treinar juntos é namorar com saúde.',
+    'Confiem no processo. Ele funciona.',
+    'Um copo d\'água antes de cada refeição. Simples e poderoso.',
+    'O melhor treino é aquele que vocês fazem.',
+    'Hoje não é dia de desistir. Amanhã também não.',
+    'Anotem uma coisa pela qual são gratos hoje.',
+    'Cada "não" para o que atrapalha é um "sim" para a meta.',
+    'Suor é gordura chorando. 😄',
+    'A consistência vence a intensidade.',
+    'Quem planeja a semana não improvisa no fast-food.',
+    'Sono de 7–8 horas regula a fome. Vá dormir cedo!',
+    'Vocês estão construindo algo que dura: saúde.',
+    'Fim de semana também conta — aproveitem com equilíbrio.',
+    'Olhem a foto do primeiro dia e vejam até onde já chegaram.',
+    'Comam para nutrir, não só para matar a vontade.',
+    'Movimento é remédio. Tome uma dose hoje.',
+    'Às vezes, o treino mais difícil é o de sair do sofá. Vençam esse!',
+    'Quem tem um parceiro de jornada tem o dobro de força.',
+    'Um dia ruim não apaga uma semana boa.',
+    'Sua meta não tem prazo de validade. Continue até chegar.',
+    'Comemorem as vitórias fora da balança: roupa folgando, mais disposição.',
+    'Fruta é o doce da natureza. Prefiram ela.',
+    'Façam hoje melhor do que ontem — só um pouquinho.',
+    'Energia se cria em movimento.',
+    'O segredo é não quebrar a sequência. 🔥',
+    'Se alimentar bem é um ato de amor próprio.',
+    'Vocês são exemplo um para o outro. Brilhem!',
+    'Quando der vontade de parar, lembrem por que começaram.',
+    'Troquem a tela por 15 minutos de caminhada hoje.',
+    'Cozinhar em casa é o melhor aliado de quem quer emagrecer.',
+    'Cada treino é um depósito na conta da saúde.',
+    'A vitória de um é a vitória dos dois.',
+    'Menos açúcar, mais energia de verdade.',
+    'Hoje é um novo começo — sem culpa do ontem.',
+    'Paciência: o corpo leva tempo para mostrar o que já mudou por dentro.',
+    'Registrem o almoço antes de esquecer! 📸',
+    'Gratidão pelo corpo que vocês têm e compromisso com o que vão ter.',
+    'Vocês estão indo muito bem. Sério!',
+    'O trabalho duro de hoje é o sorriso da foto de amanhã.',
+    'Quem se prepara não precisa de sorte.',
+    'Juntos na evolução — hoje e sempre. 💚🧡'
+  ];
+
+  function diaDoAno(d) {
+    var inicio = new Date(d.getFullYear(), 0, 0);
+    return Math.floor((d - inicio) / 86400000);
+  }
+
+  // índice absoluto de dias desde 2020 — continua girando de um ano para o outro
+  function indiceDia(d) {
+    var base = Date.UTC(2020, 0, 1);
+    var dia = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.floor((dia - base) / 86400000);
+  }
+
+  function mensagemDoDia(data) {
+    var d = data || new Date();
+    var i = indiceDia(d);
+    var v = VERSICULOS[i % VERSICULOS.length];
+    var m = MOTIVACAO[i % MOTIVACAO.length];
+    return { versiculo: v[0], referencia: v[1], motivacao: m, diaDoAno: diaDoAno(d) };
+  }
+
+  root.WW_MENSAGENS = { VERSICULOS: VERSICULOS, MOTIVACAO: MOTIVACAO, mensagemDoDia: mensagemDoDia };
+})(typeof self !== 'undefined' ? self : this);
