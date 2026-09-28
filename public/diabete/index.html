@@ -107,7 +107,7 @@ const PADRAO = {
     nome: '',
     horaCorrida: '06:00',
     horaDormir: '22:00',
-    insulina: false,
+    insulina: true,
     // Faixas (mg/dL). Os valores padrão seguem recomendações gerais;
     // devem ser confirmados/ajustados com o médico.
     hipo: 70, baixo: 90, alto: 250, muitoAlto: 300,
@@ -116,6 +116,7 @@ const PADRAO = {
     tipo: '', remedios: '', alergias: '', medico: '', obs: ''
   },
   glicemias: [],   // { t, v, m }  (hora, valor, momento)
+  insulinas: [],   // { t, u, tipo, local }  (hora, unidades, Rápida/Lenta, local)
   corridas: [],    // { inicio, fim, antes, depois, km, caminhada }
   run: null        // corrida em andamento
 };
@@ -123,13 +124,15 @@ const PADRAO = {
 let D = carregar();
 let aba = 'inicio';
 let momentoSel = null;
+let insTipo = null, insLocal = null;
+const LOCAIS = ['Barriga', 'Braço', 'Coxa', 'Nádega'];
 let sobre = null;          // 'ficha' | 'hipo'
 let hipoAte = null;
 
 function carregar(){
   try{
     const s = JSON.parse(localStorage.getItem(CHAVE));
-    if(s) return { ...PADRAO, ...s, cfg: { ...PADRAO.cfg, ...s.cfg } };
+    if(s) return { ...PADRAO, ...s, insulinas: s.insulinas || [], cfg: { ...PADRAO.cfg, ...s.cfg } };
   }catch(e){}
   return JSON.parse(JSON.stringify(PADRAO));
 }
@@ -157,6 +160,7 @@ const mmss = (ms) => {
   const p = (n) => String(n).padStart(2, '0');
   return h ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
 };
+const duracao = (ms) => { const m = Math.max(1, Math.round(ms / 60000)); return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`; };
 function toast(msg){
   const el = document.createElement('div');
   el.className = 'toast'; el.textContent = msg;
@@ -205,6 +209,17 @@ function vereditoGeral(v){
   if(v <= c.muitoAlto) return { cor:k, titulo:'Alta', texto:'Beba água e fique atento. Siga a orientação do seu médico.' };
   return { cor:k, titulo:'Muito alta', texto:'Beba água. Se continuar alta nas próximas medidas, fale com o médico.' };
 }
+
+/* ---------- insulina ---------- */
+const ultimaInsulina = (tipo) => D.insulinas.filter((i) => !tipo || i.tipo === tipo).pop();
+// Sugere o próximo local do rodízio (evita aplicar sempre no mesmo lugar).
+function localSugerido(){
+  const u = ultimaInsulina();
+  if(!u || !LOCAIS.includes(u.local)) return LOCAIS[0];
+  return LOCAIS[(LOCAIS.indexOf(u.local) + 1) % LOCAIS.length];
+}
+const minutosDesde = (t) => Math.round((agora() - t) / 60000);
+const tempoDesde = (t) => { const m = minutosDesde(t); return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`; };
 
 function registrar(v, m){
   D.glicemias.push({ t: agora(), v, m });
@@ -285,19 +300,6 @@ function baixarIcs(){
   a.href = URL.createObjectURL(blob); a.download = 'lembretes-glicose.ics';
   document.body.appendChild(a); a.click(); a.remove();
 }
-function linkGoogle(e){
-  const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
-  const ymd = `${amanha.getFullYear()}${String(amanha.getMonth()+1).padStart(2,'0')}${String(amanha.getDate()).padStart(2,'0')}`;
-  const [h, m] = e.hora.split(':').map(Number);
-  const f = (h * 60 + m + 10) % 1440;
-  const ini = `${ymd}T${String(h).padStart(2,'0')}${String(m).padStart(2,'0')}00`;
-  const fim = `${ymd}T${String(Math.floor(f/60)).padStart(2,'0')}${String(f%60).padStart(2,'0')}00`;
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-  return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
-    + `&text=${encodeURIComponent(e.titulo)}&details=${encodeURIComponent(e.desc)}`
-    + `&dates=${ini}/${fim}&ctz=${encodeURIComponent(tz)}&recur=${encodeURIComponent('RRULE:FREQ=DAILY')}`;
-}
-
 /* =========================================================
    TELAS
    ========================================================= */
@@ -315,7 +317,22 @@ function telaInicio(){
     <input id="gl" class="grande" type="number" inputmode="numeric" placeholder="mg/dL" autocomplete="off">
     <div class="chips">${momentos.map((m) => `<button class="chip ${momentoSel === m ? 'on' : ''}" data-momento="${m}">${m}</button>`).join('')}</div>
     <button id="salvarGl">Salvar</button>
+    <p class="muted" style="margin-top:10px">👆 Lave e seque as mãos antes de furar. Fure a lateral da ponta do dedo (dói menos) e vá trocando de dedo.</p>
     ${ult ? `<p class="muted" style="margin-top:12px">Última: <b class="t-${cor(ult.v)}">${ult.v}</b> — ${dia(ult.t)} às ${hora(ult.t)}${ult.m ? ' (' + esc(ult.m) + ')' : ''}</p>` : ''}
+  </div>`;
+
+  // Insulina
+  const ui = ultimaInsulina();
+  const sug = localSugerido();
+  html += `<div class="card">
+    <h2>💉 Anotar insulina</h2>
+    <input id="ins" class="grande" type="number" inputmode="decimal" step="0.5" placeholder="unidades" autocomplete="off">
+    <div class="chips">${['Rápida', 'Lenta'].map((t) => `<button class="chip ${insTipo === t ? 'on' : ''}" data-instipo="${t}">${t}</button>`).join('')}</div>
+    <p style="margin:12px 0 0;font-weight:600">Onde aplicou?</p>
+    <div class="chips">${LOCAIS.map((l) => `<button class="chip ${(insLocal || sug) === l ? 'on' : ''}" data-inslocal="${l}">${l}${l === sug ? ' ⭐' : ''}</button>`).join('')}</div>
+    <p class="muted" style="margin-top:8px">⭐ Sugestão do rodízio: <b>${sug}</b>${ui ? ` (a última foi ${esc(ui.local).toLowerCase()})` : ''}. Trocar de lugar evita caroços na pele.</p>
+    <button id="salvarIns">Salvar</button>
+    ${ui ? `<p class="muted" style="margin-top:12px">Última: <b>${ui.u} un</b> ${esc(ui.tipo).toLowerCase()} — ${esc(ui.local).toLowerCase()}, ${dia(ui.t)} às ${hora(ui.t)}</p>` : ''}
   </div>`;
 
   // Corrida do dia
@@ -354,7 +371,17 @@ function telaCorrida(){
     const todos = itens.every(([k]) => ch[k]);
     const podeCorrer = ver && (ver.tipo === 'ok' || (ver.tipo === 'alto' && (r?.cetonasOk || r?.soCaminhar)));
 
-    let html = `<h1>Antes de correr</h1>
+    // Insulina rápida nas últimas 2h ainda está agindo forte
+    const rap = ultimaInsulina('Rápida');
+    const avisoIns = rap && minutosDesde(rap.t) < 120
+      ? `<div class="aviso amarelo" style="margin:0 0 14px"><b class="big">💉 Insulina rápida há ${tempoDesde(rap.t)}</b>
+          Você aplicou ${rap.u} unidades às ${hora(rap.t)}. Ela ainda está agindo: <b>correndo, a glicose pode cair mais rápido</b>.
+          Leve açúcar extra e, se possível, espere mais um pouco ou coma um lanche antes.
+          ${rap.local === 'Coxa' ? '<br><b>Foi na coxa:</b> com a perna em movimento ela age ainda mais rápido.' : ''}
+          <br><span class="muted">Pergunte ao médico se deve reduzir a dose nos dias de corrida.</span></div>`
+      : '';
+
+    let html = `<h1>Antes de correr</h1>${avisoIns}
       <div class="card"><h2>1. Meça a glicose</h2>
         <input id="glAntes" class="grande" type="number" inputmode="numeric" placeholder="mg/dL" value="${antes || ''}">
         <button id="conferir">Conferir</button>`;
@@ -409,7 +436,7 @@ function telaCorrida(){
     const medirEm = r.fim + c.esperaDepois * 60000;
     const falta = medirEm - agora();
     return `<h1>Muito bem! 🎉</h1>
-      <div class="card"><p>Você ${r.soCaminhar ? 'caminhou' : 'correu'} por <b>${mmss(r.fim - r.inicio)}</b>.</p>
+      <div class="card"><p>Você ${r.soCaminhar ? 'caminhou' : 'correu'} por <b>${duracao(r.fim - r.inicio)}</b>.</p>
         <label for="km">Distância (km) — opcional</label>
         <input id="km" type="number" inputmode="decimal" step="0.1" value="${r.km ?? ''}">
       </div>
@@ -423,7 +450,9 @@ function telaCorrida(){
   if(r.etapa === 'fim'){
     const ult = D.corridas[D.corridas.length - 1];
     const queda = ult.antes && ult.depois ? ult.antes - ult.depois : null;
-    const ver = ult.depois ? vereditoGeral(ult.depois) : null;
+    let ver = ult.depois ? vereditoGeral(ult.depois) : null;
+    if(ver && ult.depois >= c.hipo && ult.depois < c.baixo)
+      ver = { ...ver, texto: 'Coma um lanche agora (uma fruta ou um pão) e meça de novo em 1 hora.' };
     return `<h1>Corrida salva ✅</h1>
       <div class="card">
         <p>Glicose: <b>${ult.antes ?? '—'}</b> antes → <b class="t-${cor(ult.depois)}">${ult.depois}</b> depois.</p>
@@ -458,8 +487,15 @@ function telaHistorico(){
   if(D.corridas.length){
     html += `<div class="card"><h2>Corridas</h2><ul class="lista">` +
       D.corridas.slice(-20).reverse().map((r) => `<li>
-        <div class="info"><b>${dia(r.inicio)}</b> às ${hora(r.inicio)} · ${mmss((r.fim || r.inicio) - r.inicio)}${r.km ? ' · ' + esc(r.km) + ' km' : ''}${r.caminhada ? ' · caminhada' : ''}<br>
+        <div class="info"><b>${dia(r.inicio)}</b> às ${hora(r.inicio)} · ${duracao((r.fim || r.inicio) - r.inicio)}${r.km ? ' · ' + esc(r.km) + ' km' : ''}${r.caminhada ? ' · caminhada' : ''}<br>
         <span class="muted">Glicose ${r.antes ?? '—'} → ${r.depois ?? '—'}</span></div></li>`).join('') + `</ul></div>`;
+  }
+  if(D.insulinas.length){
+    html += `<div class="card"><h2>Insulina</h2><ul class="lista">` +
+      D.insulinas.slice(-30).map((x, i, arr) => ({ x, idx: D.insulinas.length - arr.length + i })).reverse().map(({ x, idx }) => `<li>
+        <span class="num">${x.u}<small style="font-size:.8rem"> un</small></span>
+        <div class="info">${dia(x.t)} às ${hora(x.t)}<br><span class="muted">${esc(x.tipo)} · ${esc(x.local)}</span></div>
+        <button class="mini" data-apagarins="${idx}">apagar</button></li>`).join('') + `</ul></div>`;
   }
   if(D.glicemias.length){
     html += `<div class="card"><h2>Medidas</h2><ul class="lista">` +
@@ -491,11 +527,7 @@ function telaAjustes(){
   <div class="card"><h2>Horários e lembretes</h2>
     <div class="linha"><div>${campo('horaCorrida', 'Corrida', 'time')}</div><div>${campo('horaDormir', 'Dormir', 'time')}</div></div>
     <p class="muted" style="margin-top:12px">O celular só avisa com o app fechado se os lembretes estiverem na agenda. Toque abaixo uma vez (e de novo se mudar os horários):</p>
-    <button id="ics">📅 Colocar lembretes na agenda (iPhone)</button>
-    <details style="margin-top:10px"><summary style="font-weight:700;cursor:pointer;padding:8px 0">Android / Google Agenda</summary>
-      <p class="muted">Toque em cada um e depois em “Salvar”. Eles se repetem todo dia.</p>
-      ${eventosLembrete().map((e) => `<a class="btn sec" target="_blank" rel="noopener" href="${linkGoogle(e)}">${esc(e.hora)} — ${esc(e.titulo)}</a>`).join('')}
-    </details>
+    <button id="ics">📅 Colocar lembretes na agenda do iPhone</button>
     ${permNotif === 'default' ? '<button class="sec" id="notif">🔔 Permitir avisos do app</button>' : ''}
   </div>
 
@@ -585,7 +617,17 @@ document.addEventListener('click', (e) => {
     sobre = d.sobre; render(); return;
   }
   if('fechar' in d){ sobre = null; render(); return; }
-  if(d.momento){ momentoSel = momentoSel === d.momento ? null : d.momento; const v = $('#gl').value; render(); $('#gl').value = v; return; }
+  if(d.momento || d.instipo || d.inslocal){
+    if(d.momento) momentoSel = momentoSel === d.momento ? null : d.momento;
+    if(d.instipo) insTipo = d.instipo;
+    if(d.inslocal) insLocal = d.inslocal;
+    const g = $('#gl').value, n = $('#ins').value;
+    render(); $('#gl').value = g; $('#ins').value = n; return;
+  }
+  if(d.apagarins !== undefined){
+    if(confirm('Apagar esta aplicação?')){ D.insulinas.splice(+d.apagarins, 1); salvar(); render(); }
+    return;
+  }
   if(d.apagar !== undefined){
     if(confirm('Apagar esta medida?')){ D.glicemias.splice(+d.apagar, 1); salvar(); render(); }
     return;
@@ -600,6 +642,16 @@ document.addEventListener('click', (e) => {
       if(v < D.cfg.hipo){ sobre = 'hipo'; render(); return; }
       render();
       $('#app').insertAdjacentHTML('afterbegin', `<div class="aviso ${ver.cor}" style="margin:0 0 14px"><b class="big">${v} — ${ver.titulo}</b>${ver.texto}</div>`);
+      return;
+    }
+    case 'salvarIns': {
+      const u = parseFloat(($('#ins').value || '').replace(',', '.'));
+      if(!(u > 0 && u <= 100)){ toast('Digite quantas unidades aplicou.'); return; }
+      if(!insTipo){ toast('Toque em Rápida ou Lenta.'); return; }
+      const local = insLocal || localSugerido();
+      D.insulinas.push({ t: agora(), u, tipo: insTipo, local });
+      salvar(); insTipo = null; insLocal = null; render();
+      toast(`Anotado: ${u} un ${local.toLowerCase()} ✓`);
       return;
     }
     case 'conferir': {
@@ -675,6 +727,14 @@ function compartilharResumo(){
     const ab = r.filter((x) => x.antes && x.depois);
     t += `Corridas: ${r.length}` + (ab.length ? ` · queda média ${Math.round(ab.reduce((s, x) => s + x.antes - x.depois, 0) / ab.length)} mg/dL` : '') + '\n';
   }
+  const ins = D.insulinas.filter((x) => x.t > agora() - 30 * 864e5);
+  if(ins.length){
+    const dias = new Set(ins.map((x) => hojeStr(x.t))).size;
+    ['Rápida', 'Lenta'].forEach((tp) => {
+      const l = ins.filter((x) => x.tipo === tp);
+      if(l.length) t += `Insulina ${tp.toLowerCase()}: média ${Math.round(l.reduce((a, x) => a + x.u, 0) / dias * 10) / 10} un/dia (${l.length} aplicações)\n`;
+    });
+  }
   t += '\nMedidas:\n' + g.slice().reverse().map((x) => `${new Date(x.t).toLocaleDateString('pt-BR')} ${hora(x.t)} — ${x.v}${x.m ? ' (' + x.m + ')' : ''}`).join('\n');
   if(navigator.share) navigator.share({ title: 'Resumo de glicose', text: t }).catch(() => {});
   else navigator.clipboard?.writeText(t).then(() => toast('Resumo copiado. Cole no WhatsApp do médico.'));
@@ -691,7 +751,7 @@ function importar(arq){
     const x = JSON.parse(s);
     if(!x || !Array.isArray(x.glicemias)) throw 0;
     if(!confirm('Isso substitui os dados atuais pelos da cópia. Continuar?')) return;
-    D = { ...PADRAO, ...x, cfg: { ...PADRAO.cfg, ...x.cfg } }; salvar(); render(); toast('Cópia restaurada ✓');
+    D = { ...PADRAO, ...x, insulinas: x.insulinas || [], cfg: { ...PADRAO.cfg, ...x.cfg } }; salvar(); render(); toast('Cópia restaurada ✓');
   }).catch(() => toast('Arquivo inválido.'));
 }
 
