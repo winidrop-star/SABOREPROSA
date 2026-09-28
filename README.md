@@ -23,6 +23,10 @@ isso que entra pra fila da cozinha em tempo real.
   tabela `config` do Supabase (só dígitos, com 55 na frente).
 - **Adicionais e preços**: vêm com uma lista de exemplo; ajuste no painel
   (modo Caixa → "Loja & cardápio") ou na área de admin do site.
+- **Fotos**: as dos lanches e da batata foram tiradas do cardápio em PDF e
+  ficam em `public/fotos/`. Pra trocar ou pôr foto num item novo, coloque a
+  imagem nessa pasta (ou use um link) e preencha o campo "Foto" do item na
+  área de admin do site.
 - **Horário**: padrão 18:00 às 23:30; muda no painel. Fechamento depois da
   meia-noite (ex: 18:00 às 00:30) funciona.
 

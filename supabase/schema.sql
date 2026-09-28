@@ -135,7 +135,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 20,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-salada.webp"
    },
    {
     "id": "baguncinha",
@@ -144,7 +145,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer, salsicha, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 22,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/baguncinha.webp"
    },
    {
     "id": "x-bagunca",
@@ -153,7 +155,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 25,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-bagunca.webp"
    },
    {
     "id": "x-duplo",
@@ -162,7 +165,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, 2 hambúrgueres, salsicha, calabresa, bacon em dobro, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 28,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-duplo.webp"
    },
    {
     "id": "x-bacon",
@@ -171,7 +175,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer, salsicha, ovo, presunto, mussarela, bacon em dobro, alface, tomate, maionese caseira.",
     "preco": 30,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-bacon.webp"
    },
    {
     "id": "x-calabresa",
@@ -180,7 +185,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer, salsicha, ovo, bacon, presunto, calabresa em dobro, mussarela, alface, tomate, maionese caseira.",
     "preco": 30,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-calabresa.webp"
    },
    {
     "id": "x-tudo",
@@ -189,7 +195,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer, salsicha, calabresa, bacon, ovo, presunto, mussarela, milho, batata palha, alface, tomate, maionese caseira.",
     "preco": 32,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-tudo.webp"
    },
    {
     "id": "quarteirao",
@@ -198,7 +205,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, 4 hambúrgueres, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 35,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/quarteirao.webp"
    }
   ]
  },
@@ -213,7 +221,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer caseiro de costela 120g, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 25,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-salada-premium.webp"
    },
    {
     "id": "baguncinha-premium",
@@ -222,7 +231,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer caseiro de costela 120g, salsicha, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 27,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/baguncinha-premium.webp"
    },
    {
     "id": "x-bagunca-premium",
@@ -231,7 +241,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, hambúrguer caseiro de costela 120g, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 30,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-bagunca-premium.webp"
    },
    {
     "id": "x-duplo-premium",
@@ -240,7 +251,8 @@ insert into config (chave, valor) values
     "descricao": "Pão, 2 hambúrgueres caseiros de costela 120g, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
     "preco": 34,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-duplo-premium.webp"
    },
    {
     "id": "x-costela-premium",
@@ -249,7 +261,8 @@ insert into config (chave, valor) values
     "descricao": "Pão brioche, hambúrguer caseiro de costela 150g, bacon, queijo cheddar, alface, tomate, maionese caseira, ketchup, mostarda e barbecue.",
     "preco": 35,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-costela-premium.webp"
    },
    {
     "id": "x-costela-duplo-premium",
@@ -258,7 +271,8 @@ insert into config (chave, valor) values
     "descricao": "Pão brioche, 2 hambúrgueres caseiros de costela 150g, bacon, queijo cheddar, alface, tomate, maionese caseira, ketchup, mostarda e barbecue.",
     "preco": 40,
     "temAdicionais": true,
-    "disponivel": true
+    "disponivel": true,
+    "foto": "/fotos/x-costela-duplo-premium.webp"
    }
   ]
  },
@@ -285,7 +299,8 @@ insert into config (chave, valor) values
       "preco": 30
      }
     ],
-    "descricao": "Batata frita crocante."
+    "descricao": "Batata frita crocante.",
+    "foto": "/fotos/batata.webp"
    }
   ]
  },

@@ -212,6 +212,17 @@ function renderMenu() {
         (item.disponivel ? '' : '<span class="item-badge">Esgotado</span>') + '</div>' +
         descHtml + rows;
     }
+    if (item.foto) {
+      const foto = document.createElement('div');
+      foto.className = 'item-foto';
+      const img = document.createElement('img');
+      img.src = item.foto;
+      img.alt = item.nome;
+      img.loading = 'lazy';
+      img.addEventListener('error', () => foto.remove());
+      foto.appendChild(img);
+      card.prepend(foto);
+    }
     wrap.appendChild(card);
   });
 
@@ -735,6 +746,18 @@ function renderAdminItemRow(cat, item, idx) {
     });
     row.appendChild(addVariantBtn);
   }
+
+  const fotoField = document.createElement('div');
+  fotoField.className = 'admin-desc-field';
+  const fotoInput = document.createElement('input');
+  fotoInput.type = 'text';
+  fotoInput.className = 'admin-field-input';
+  fotoInput.style.width = '100%';
+  fotoInput.placeholder = 'Foto (ex: /fotos/x-salada.webp ou link da imagem) — opcional';
+  fotoInput.value = item.foto || '';
+  fotoInput.addEventListener('input', () => (item.foto = fotoInput.value.trim()));
+  fotoField.appendChild(fotoInput);
+  row.appendChild(fotoField);
 
   const lancheToggle = document.createElement('label');
   lancheToggle.className = 'toggle-row';

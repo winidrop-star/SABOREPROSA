@@ -97,6 +97,12 @@ a{ color:var(--ink-on-brown); }
 .section-label{ font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--brand-light); margin:24px 0 12px; }
 .item-card{ background:var(--surface); color:var(--ink); border:1.5px solid var(--line); border-radius:var(--radius); padding:16px 16px; margin-bottom:12px; position:relative; }
 .item-card.unavailable{ opacity:0.6; }
+.item-foto{
+  margin:-16px -16px 14px; height:190px; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  border-radius:calc(var(--radius) - 1.5px) calc(var(--radius) - 1.5px) 0 0;
+  background:radial-gradient(ellipse at 50% 65%, #FFFFFF 0%, var(--surface-2) 55%, var(--line-soft) 100%);
+}
+.item-foto img{ max-width:78%; max-height:86%; object-fit:contain; filter:drop-shadow(0 12px 12px rgba(8,28,48,0.28)); }
 .item-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .item-name{ font-family:'Bree Serif',Georgia,serif; font-weight:400; font-size:1.12rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--btn-bg); }
 .item-desc{ color:var(--ink-soft); font-size:0.85rem; margin-top:5px; line-height:1.5; }
