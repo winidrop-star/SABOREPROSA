@@ -1,8 +1,8 @@
--- Sabor e Prosa — schema do Supabase
+-- Porto Hamburgueria — schema do Supabase
 -- Rode este arquivo inteiro em: seu projeto Supabase -> SQL Editor -> New query -> Run
 
 -- ---------------------------------------------------------------
--- config: guarda loja, cardápio do dia, categorias/itens do menu
+-- config: guarda loja, adicionais dos lanches, categorias/itens do menu
 -- e cupons como blobs JSON (um registro por chave), do mesmo jeito
 -- que o app original guardava tudo em um único objeto STATE.
 -- ---------------------------------------------------------------
@@ -82,35 +82,266 @@ create policy "movimentos leitura publica" on caixa_movimentos for select using 
 create policy "movimentos escrita publica" on caixa_movimentos for insert with check (true);
 
 -- ---------------------------------------------------------------
--- Dados iniciais — o mesmo cardápio que já estava nos dois apps
+-- Dados iniciais — cardápio da Porto Hamburgueria
+--
+-- Os "adicionais" abaixo são um ponto de partida: confira nomes e preços
+-- (e o número do WhatsApp em "loja") no painel, aba "Loja & cardápio",
+-- ou na área de admin do site.
 -- ---------------------------------------------------------------
 insert into config (chave, valor) values
-('loja', '{"modo":"auto","horarioAbre":"10:30","horarioFecha":"13:30","whatsapp":"5565992286248"}'),
-('cardapioDia', '{"proteina1":"Bife Bovino","proteina2":"Coxa e Sobrecoxa ao Molho","feijaoOpcoes":["Feijão preto","Sem feijão"],"legumesOpcoes":[],"adicionaisOpcoes":["Frango Empanado"]}'),
+('loja', '{"modo": "auto", "horarioAbre": "18:00", "horarioFecha": "23:30", "whatsapp": ""}'),
+('adicionais', '[
+ {
+  "nome": "Hambúrguer extra",
+  "preco": 6,
+  "disponivel": true
+ },
+ {
+  "nome": "Bacon",
+  "preco": 5,
+  "disponivel": true
+ },
+ {
+  "nome": "Cheddar",
+  "preco": 4,
+  "disponivel": true
+ },
+ {
+  "nome": "Ovo",
+  "preco": 3,
+  "disponivel": true
+ },
+ {
+  "nome": "Calabresa",
+  "preco": 5,
+  "disponivel": true
+ },
+ {
+  "nome": "Batata palha",
+  "preco": 2,
+  "disponivel": true
+ }
+]'),
 ('cupons', '[]'),
 ('categorias', '[
- {"id":"marmitas","nome":"Marmitas","itens":[
-   {"id":"padrao-p","nome":"Marmita Padrão P","tipo":"simples","descricao":"Arroz, feijão, macarrão, farofa e abobrinha e cenoura refogada","preco":26,"escolheProteina":true,"escolheFeijao":true,"temAdicionais":true,"disponivel":true},
-   {"id":"padrao-m","nome":"Marmita Padrão M","tipo":"simples","descricao":"Arroz, feijão, macarrão, farofa e abobrinha e cenoura refogada","preco":30,"proteinasIncluidas":true,"escolheFeijao":true,"temAdicionais":true,"disponivel":true},
-   {"id":"padrao-g","nome":"Marmita Padrão G","tipo":"simples","descricao":"Arroz, feijão, macarrão, farofa e abobrinha e cenoura refogada","preco":35,"proteinasIncluidas":true,"escolheFeijao":true,"temAdicionais":true,"disponivel":true},
-   {"id":"simples","nome":"Marmita Simples","tipo":"simples","descricao":"Arroz, feijão, macarrão e uma proteína à sua escolha","preco":28,"escolheProteina":true,"escolheFeijao":true,"temAdicionais":true,"disponivel":true},
-   {"id":"exec3","nome":"Marmita Executiva 3 Divisórias","tipo":"simples","descricao":"Arroz, feijão, macarrão e uma proteína à sua escolha","preco":30,"escolheProteina":true,"escolheFeijao":true,"temAdicionais":true,"disponivel":true},
-   {"id":"exec4","nome":"Marmita Executiva 4 Divisórias","tipo":"simples","descricao":"Arroz, feijão, 1 ovo frito, batatinha frita, bife bovino","preco":38,"escolheFeijao":true,"temAdicionais":true,"disponivel":true}
- ]},
- {"id":"bebidas","nome":"Bebidas","itens":[
-   {"id":"coca","nome":"Coca-Cola","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6},{"label":"600ml","preco":8},{"label":"1,5L","preco":15},{"label":"2L","preco":16}]},
-   {"id":"cocazero","nome":"Coca-Cola Zero","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6},{"label":"500ml","preco":8}]},
-   {"id":"guarana","nome":"Guaraná Antártica","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6},{"label":"600ml","preco":8},{"label":"1L","preco":13},{"label":"1,5L","preco":15},{"label":"2L","preco":16}]},
-   {"id":"guaranazero","nome":"Guaraná Antártica Zero","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6,"disponivel":false},{"label":"600ml","preco":8},{"label":"1L","preco":13},{"label":"2L","preco":16}]},
-   {"id":"kitu","nome":"Kitubaína","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6},{"label":"600ml","preco":8},{"label":"1L","preco":13},{"label":"1,5L","preco":15},{"label":"2L","preco":16}]},
-   {"id":"fantalaranja","nome":"Fanta Laranja","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6},{"label":"600ml","preco":8}]},
-   {"id":"fantauva","nome":"Fanta Uva","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6}]},
-   {"id":"h2olimonetto","nome":"H2O Limonetto","tipo":"variantes","disponivel":true,"variantes":[{"label":"600ml","preco":8}]},
-   {"id":"h2o","nome":"H2O","tipo":"variantes","disponivel":true,"variantes":[{"label":"600ml","preco":8}]},
-   {"id":"aguacomgas","nome":"Água com gás","tipo":"variantes","disponivel":true,"variantes":[{"label":"Única","preco":5}]},
-   {"id":"aguasemgas","nome":"Água sem gás","tipo":"variantes","disponivel":true,"variantes":[{"label":"Única","preco":5}]},
-   {"id":"sprite","nome":"Sprite","tipo":"variantes","disponivel":true,"variantes":[{"label":"Lata","preco":6}]},
-   {"id":"sucolaranja","nome":"Suco de Laranja","tipo":"variantes","disponivel":true,"variantes":[{"label":"300ml","preco":14},{"label":"500ml","preco":24}]}
- ]}
+ {
+  "id": "lanches-cuiabanos",
+  "nome": "Lanches Cuiabanos",
+  "itens": [
+   {
+    "id": "x-salada",
+    "nome": "X-Salada",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 20,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "baguncinha",
+    "nome": "Baguncinha",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer, salsicha, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 22,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-bagunca",
+    "nome": "X-Bagunça",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 25,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-duplo",
+    "nome": "X-Duplo",
+    "tipo": "simples",
+    "descricao": "Pão, 2 hambúrgueres, salsicha, calabresa, bacon em dobro, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 28,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-bacon",
+    "nome": "X-Bacon",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer, salsicha, ovo, presunto, mussarela, bacon em dobro, alface, tomate, maionese caseira.",
+    "preco": 30,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-calabresa",
+    "nome": "X-Calabresa",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer, salsicha, ovo, bacon, presunto, calabresa em dobro, mussarela, alface, tomate, maionese caseira.",
+    "preco": 30,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-tudo",
+    "nome": "X-Tudo",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer, salsicha, calabresa, bacon, ovo, presunto, mussarela, milho, batata palha, alface, tomate, maionese caseira.",
+    "preco": 32,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "quarteirao",
+    "nome": "Quarteirão",
+    "tipo": "simples",
+    "descricao": "Pão, 4 hambúrgueres, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 35,
+    "temAdicionais": true,
+    "disponivel": true
+   }
+  ]
+ },
+ {
+  "id": "lanches-premium",
+  "nome": "Lanches Premium",
+  "itens": [
+   {
+    "id": "x-salada-premium",
+    "nome": "X-Salada Premium",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer caseiro de costela 120g, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 25,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "baguncinha-premium",
+    "nome": "Baguncinha Premium",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer caseiro de costela 120g, salsicha, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 27,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-bagunca-premium",
+    "nome": "X-Bagunça Premium",
+    "tipo": "simples",
+    "descricao": "Pão, hambúrguer caseiro de costela 120g, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 30,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-duplo-premium",
+    "nome": "X-Duplo Premium",
+    "tipo": "simples",
+    "descricao": "Pão, 2 hambúrgueres caseiros de costela 120g, salsicha, calabresa, bacon, ovo, presunto, mussarela, alface, tomate, maionese caseira.",
+    "preco": 34,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-costela-premium",
+    "nome": "X-Costela Premium",
+    "tipo": "simples",
+    "descricao": "Pão brioche, hambúrguer caseiro de costela 150g, bacon, queijo cheddar, alface, tomate, maionese caseira, ketchup, mostarda e barbecue.",
+    "preco": 35,
+    "temAdicionais": true,
+    "disponivel": true
+   },
+   {
+    "id": "x-costela-duplo-premium",
+    "nome": "X-Costela Duplo Premium",
+    "tipo": "simples",
+    "descricao": "Pão brioche, 2 hambúrgueres caseiros de costela 150g, bacon, queijo cheddar, alface, tomate, maionese caseira, ketchup, mostarda e barbecue.",
+    "preco": 40,
+    "temAdicionais": true,
+    "disponivel": true
+   }
+  ]
+ },
+ {
+  "id": "porcoes",
+  "nome": "Porções",
+  "itens": [
+   {
+    "id": "batata",
+    "nome": "Porção de Batata",
+    "tipo": "variantes",
+    "disponivel": true,
+    "variantes": [
+     {
+      "label": "Pequena 100g",
+      "preco": 12
+     },
+     {
+      "label": "Média 200g",
+      "preco": 18
+     },
+     {
+      "label": "Grande 300g",
+      "preco": 30
+     }
+    ],
+    "descricao": "Batata frita crocante."
+   }
+  ]
+ },
+ {
+  "id": "bebidas",
+  "nome": "Bebidas",
+  "itens": [
+   {
+    "id": "coca",
+    "nome": "Coca-Cola",
+    "tipo": "variantes",
+    "disponivel": true,
+    "variantes": [
+     {
+      "label": "Lata",
+      "preco": 6
+     },
+     {
+      "label": "1,5L",
+      "preco": 12
+     }
+    ]
+   },
+   {
+    "id": "guarana",
+    "nome": "Guaraná",
+    "tipo": "variantes",
+    "disponivel": true,
+    "variantes": [
+     {
+      "label": "Lata",
+      "preco": 6
+     },
+     {
+      "label": "1L",
+      "preco": 10
+     },
+     {
+      "label": "1,5L",
+      "preco": 12
+     }
+    ]
+   },
+   {
+    "id": "fanta",
+    "nome": "Fanta",
+    "tipo": "variantes",
+    "disponivel": true,
+    "variantes": [
+     {
+      "label": "Lata",
+      "preco": 6
+     }
+    ]
+   }
+  ]
+ }
 ]')
 on conflict (chave) do nothing;

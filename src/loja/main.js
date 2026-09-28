@@ -1,14 +1,15 @@
 import { fmtBRL, pad2 } from '../lib/format.js';
 import { loadState, saveState } from '../lib/config.js';
 import { baixarComandaPdf } from '../lib/pdfComanda.js';
+import { novoConfig, somaAdicionais, montarDetalhe, configRowHtml, renderAdicionaisEditor } from '../lib/lanche.js';
 
-const ADMIN_SLUG = import.meta.env.VITE_ADMIN_SLUG || 'saboreprosa-cozinha-4127';
+const ADMIN_SLUG = import.meta.env.VITE_ADMIN_SLUG || 'porto-cozinha-4127';
 
 let STATE = null;
 let draft = null;
 let cart = {};
 try {
-  const saved = localStorage.getItem('sep_cart_v1');
+  const saved = localStorage.getItem('porto_cart_v1');
   if (saved) cart = JSON.parse(saved);
 } catch (e) {}
 
@@ -16,7 +17,7 @@ let activeCategory = null;
 
 function saveCart() {
   try {
-    localStorage.setItem('sep_cart_v1', JSON.stringify(cart));
+    localStorage.setItem('porto_cart_v1', JSON.stringify(cart));
   } catch (e) {}
 }
 function findItem(catId, itemId) {
@@ -50,164 +51,30 @@ function cartCount() {
   return cartArray().reduce((sum, i) => sum + i.qty, 0);
 }
 
-/* ---------------- configuração da marmita (proteína / feijão / adicionais) ---------------- */
+/* ---------------- montagem do lanche (adicionais / tirar ingrediente) ---------------- */
 const configState = {};
 function configKeyFor(catId, itemId, variantLabel) {
   return catId + '::' + itemId + '::' + (variantLabel || '');
 }
 function getConfigState(ckey) {
-  if (!configState[ckey]) configState[ckey] = { proteina: null, feijao: null, legume: null, adicionais: {}, qty: 1 };
+  if (!configState[ckey]) configState[ckey] = novoConfig();
   return configState[ckey];
 }
-const ADICIONAIS_FIXOS = [
-  { nome: 'Batata Frita', preco: 25 },
-  { nome: 'Mix de Salada', preco: 3.5 },
-  { nome: 'Ovo', preco: 3.5 }
-];
-function getAdicionaisCatalogo() {
-  const cd = STATE.cardapioDia || {};
-  const lista = [];
-  if (cd.proteina1) lista.push({ nome: cd.proteina1, preco: 25 });
-  if (cd.proteina2) lista.push({ nome: cd.proteina2, preco: 25 });
-  (cd.adicionaisOpcoes || []).forEach((nome) => lista.push({ nome, preco: 25 }));
-  return lista.concat(ADICIONAIS_FIXOS);
-}
-function precoAdicional(nome) {
-  const found = getAdicionaisCatalogo().find((a) => a.nome === nome);
-  return found ? found.preco : 0;
-}
-function somaAdicionaisSelecionados(st) {
-  return Object.keys(st.adicionais)
-    .filter((k) => st.adicionais[k])
-    .reduce((sum, nome) => sum + precoAdicional(nome), 0);
-}
-function buildVariantLabel(variant, escolheProteina, cd, st) {
-  const parts = [];
-  if (variant) parts.push(variant.label);
-  if (variant && variant.proteinasIncluidas && cd.proteina1 && cd.proteina2) {
-    parts.push(cd.proteina1 + ' e ' + cd.proteina2);
-  } else if (escolheProteina && st.proteina) {
-    parts.push(st.proteina);
-  }
-  if (st.feijao) parts.push(st.feijao);
-  if (st.legume) parts.push(st.legume);
-  const extras = Object.keys(st.adicionais).filter((k) => st.adicionais[k]);
-  if (extras.length) parts.push('+ ' + extras.join(', '));
-  return parts.join(', ');
-}
 function renderConfigRow(cat, item, variant) {
-  const basePrice = variant ? variant.preco : item.preco;
-  const label = variant ? variant.label : null;
-  const ckey = configKeyFor(cat.id, item.id, label);
-  const escolheProteina = variant ? !!variant.escolheProteina : !!item.escolheProteina;
-  const proteinasIncluidas = variant ? !!variant.proteinasIncluidas : !!item.proteinasIncluidas;
-  const escolheFeijao = !!item.escolheFeijao;
-  const temAdicionais = !!item.temAdicionais;
-  const cd = STATE.cardapioDia || {};
-  const st = getConfigState(ckey);
-
-  const totalUnit = basePrice + somaAdicionaisSelecionados(st);
-
-  let proteinaHtml = '';
-  if (escolheProteina && cd.proteina1 && cd.proteina2) {
-    proteinaHtml =
-      '<div class="config-group"><div class="config-label">Escolha a proteína</div><div class="chip-group">' +
-      [cd.proteina1, cd.proteina2]
-        .map(
-          (p) =>
-            '<button type="button" class="chip small config-proteina' +
-            (st.proteina === p ? ' selected' : '') +
-            '" data-configkey="' + ckey + '" data-value="' + p + '">' + p + '</button>'
-        )
-        .join('') +
-      '</div></div>';
-  } else if (proteinasIncluidas && cd.proteina1 && cd.proteina2) {
-    proteinaHtml =
-      '<div class="config-note"><strong>Já vem com ' + cd.proteina1 + ' e ' + cd.proteina2 + '.</strong> ' +
-      'Quiser só uma das duas, escreve nas observações do pedido.</div>';
-  }
-
-  let feijaoHtml = '';
-  if (escolheFeijao && cd.feijaoOpcoes && cd.feijaoOpcoes.length >= 2) {
-    feijaoHtml =
-      '<div class="config-group"><div class="config-label">Escolha o feijão</div><div class="chip-group">' +
-      cd.feijaoOpcoes
-        .map(
-          (f) =>
-            '<button type="button" class="chip small config-feijao' +
-            (st.feijao === f ? ' selected' : '') +
-            '" data-configkey="' + ckey + '" data-value="' + f + '">' + f + '</button>'
-        )
-        .join('') +
-      '</div></div>';
-  }
-
-  let legumeHtml = '';
-  if (escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length >= 2) {
-    legumeHtml =
-      '<div class="config-group"><div class="config-label">Escolha o legume</div><div class="chip-group">' +
-      cd.legumesOpcoes
-        .map(
-          (l) =>
-            '<button type="button" class="chip small config-legume' +
-            (st.legume === l ? ' selected' : '') +
-            '" data-configkey="' + ckey + '" data-value="' + l + '">' + l + '</button>'
-        )
-        .join('') +
-      '</div></div>';
-  } else if (escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length === 1) {
-    legumeHtml = '<div class="config-note">Acompanha <strong>' + cd.legumesOpcoes[0] + '</strong>.</div>';
-  }
-
-  let adicionaisHtml = '';
-  if (temAdicionais) {
-    const catalogoAdicionais = getAdicionaisCatalogo();
-    if (catalogoAdicionais.length) {
-      adicionaisHtml =
-        '<div class="config-group"><div class="config-label">Adicionais</div><div class="chip-group">' +
-        catalogoAdicionais
-          .map(
-            (a) =>
-              '<button type="button" class="chip small config-adicional' +
-              (st.adicionais[a.nome] ? ' selected' : '') +
-              '" data-configkey="' + ckey + '" data-value="' + a.nome + '">' + a.nome + ' (+' + fmtBRL(a.preco) + ')</button>'
-          )
-          .join('') +
-        '</div></div>';
-    }
-  }
-
-  const proteinaOk = !(escolheProteina && cd.proteina1 && cd.proteina2) || st.proteina;
-  const feijaoOk = !(escolheFeijao && cd.feijaoOpcoes && cd.feijaoOpcoes.length >= 2) || st.feijao;
-  const legumeOk = !(escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length >= 2) || st.legume;
-  const podeAdicionar = proteinaOk && feijaoOk && legumeOk && item.disponivel && lojaEstaAberta();
-
-  return (
-    '<div class="marmita-config" data-configkey="' + ckey + '">' +
-    (label ? '<div class="variant-label-row">' + label + ' · <span class="price">' + fmtBRL(basePrice) + '</span></div>' : '') +
-    proteinaHtml +
-    feijaoHtml +
-    legumeHtml +
-    adicionaisHtml +
-    '<div class="config-footer">' +
-    '<span class="config-total mono price">' + fmtBRL(totalUnit) + '</span>' +
-    '<button type="button" class="btn-add-config" data-configkey="' + ckey + '"' + (podeAdicionar ? '' : ' disabled') + '>Adicionar</button>' +
-    '</div>' +
-    '</div>'
-  );
+  const ckey = configKeyFor(cat.id, item.id, variant ? variant.label : null);
+  return configRowHtml(STATE, item, variant, ckey, getConfigState(ckey), item.disponivel && lojaEstaAberta());
 }
-function addConfiguredToCart(catId, itemId, variantLabel, name, basePrice, variant, escolheProteina) {
+function addConfiguredToCart(catId, itemId, variantLabel, name, basePrice, variant) {
   const ckey = configKeyFor(catId, itemId, variantLabel);
   const st = getConfigState(ckey);
-  const cd = STATE.cardapioDia || {};
-  const unitPrice = basePrice + somaAdicionaisSelecionados(st);
-  const compositeLabel = buildVariantLabel(variant, escolheProteina, cd, st);
-  const key = cartKey(catId, itemId, compositeLabel);
-  const current = cart[key] || { qty: 0, name, variant: compositeLabel || null, unitPrice, catId, itemId };
+  const unitPrice = basePrice + somaAdicionais(STATE, st);
+  const detalhe = montarDetalhe(variant, st);
+  const key = cartKey(catId, itemId, detalhe);
+  const current = cart[key] || { qty: 0, name, variant: detalhe || null, unitPrice, catId, itemId };
   current.qty += 1;
   cart[key] = current;
   saveCart();
-  configState[ckey] = { proteina: null, feijao: null, legume: null, adicionais: {}, qty: 1 };
+  configState[ckey] = novoConfig();
   renderMenu();
   renderCartBar();
 }
@@ -221,8 +88,10 @@ function horarioToMin(hhmm, fallback) {
 function dentroDoHorario() {
   const agora = new Date();
   const minutos = agora.getHours() * 60 + agora.getMinutes();
-  const abre = horarioToMin(STATE.loja.horarioAbre, 10 * 60 + 30);
-  const fecha = horarioToMin(STATE.loja.horarioFecha, 13 * 60 + 30);
+  const abre = horarioToMin(STATE.loja.horarioAbre, 18 * 60);
+  const fecha = horarioToMin(STATE.loja.horarioFecha, 23 * 60 + 30);
+  // fechamento depois da meia-noite (ex: 18:00 às 00:30)
+  if (fecha <= abre) return minutos >= abre || minutos < fecha;
   return minutos >= abre && minutos < fecha;
 }
 function lojaEstaAberta() {
@@ -232,7 +101,7 @@ function lojaEstaAberta() {
   return dentroDoHorario();
 }
 function horarioTexto() {
-  return (STATE.loja.horarioAbre || '10:30') + 'h às ' + (STATE.loja.horarioFecha || '13:30') + 'h';
+  return (STATE.loja.horarioAbre || '18:00') + 'h às ' + (STATE.loja.horarioFecha || '23:30') + 'h';
 }
 
 /* ---------------- render: cardápio do cliente ---------------- */
@@ -249,9 +118,13 @@ function renderStatusBanner() {
   }
 }
 
+const ICON_LANCHE =
+  '<svg viewBox="0 0 24 24" fill="none"><path d="M4 10.5C4 6.9 7.6 4.5 12 4.5s8 2.4 8 6H4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3.5 13.5h17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.5 16.5h15a0 0 0 0 1 0 0c0 1.7-1.3 3-3 3h-9c-1.7 0-3-1.3-3-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 const CATEGORY_ICONS = {
-  marmitas:
-    '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="9" width="18" height="11" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9c0-2.8 2-4.5 4.5-4.5h9C19 4.5 21 6.2 21 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="12" y1="9" x2="12" y2="20" stroke="currentColor" stroke-width="1.4"/></svg>',
+  'lanches-cuiabanos': ICON_LANCHE,
+  'lanches-premium': ICON_LANCHE,
+  porcoes:
+    '<svg viewBox="0 0 24 24" fill="none"><path d="M5 10h14l-1.6 9.2a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3L5 10z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 10V4.5M11 10V3.5M14 10V4M17 10V5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
   bebidas:
     '<svg viewBox="0 0 24 24" fill="none"><path d="M7 3h10l-1.2 13.5a3.8 3.8 0 0 1-3.8 3.5A3.8 3.8 0 0 1 8.2 16.5L7 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><line x1="6.3" y1="7.5" x2="17.7" y2="7.5" stroke="currentColor" stroke-width="1.4"/></svg>'
 };
@@ -306,7 +179,7 @@ function renderMenu() {
     card.className = 'item-card' + (item.disponivel ? '' : ' unavailable');
     const descHtml = item.descricao ? '<div class="item-desc">' + item.descricao + '</div>' : '';
 
-    if (cat.id === 'marmitas') {
+    if (item.temAdicionais) {
       const configRowsHtml =
         item.tipo === 'simples' ? renderConfigRow(cat, item, null) : item.variantes.map((v) => renderConfigRow(cat, item, v)).join('');
       card.innerHTML =
@@ -342,17 +215,16 @@ function renderMenu() {
     wrap.appendChild(card);
   });
 
-  wrap.querySelectorAll('.config-proteina, .config-feijao, .config-legume, .config-adicional').forEach((btn) => {
+  wrap.querySelectorAll('.config-adicional').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const ckey = btn.getAttribute('data-configkey');
+      const st = getConfigState(btn.getAttribute('data-configkey'));
       const value = btn.getAttribute('data-value');
-      const st = getConfigState(ckey);
-      if (btn.classList.contains('config-proteina')) st.proteina = st.proteina === value ? null : value;
-      else if (btn.classList.contains('config-feijao')) st.feijao = st.feijao === value ? null : value;
-      else if (btn.classList.contains('config-legume')) st.legume = st.legume === value ? null : value;
-      else st.adicionais[value] = !st.adicionais[value];
+      st.adicionais[value] = !st.adicionais[value];
       renderMenu();
     });
+  });
+  wrap.querySelectorAll('.config-retirar').forEach((input) => {
+    input.addEventListener('input', () => (getConfigState(input.getAttribute('data-configkey')).retirar = input.value));
   });
   wrap.querySelectorAll('.btn-add-config').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -362,8 +234,7 @@ function renderMenu() {
       const item = findItem(catId, itemId);
       const variant = variantLabel ? item.variantes.find((v) => v.label === variantLabel) : null;
       const basePrice = variant ? variant.preco : item.preco;
-      const escolheProteina = variant ? !!variant.escolheProteina : !!item.escolheProteina;
-      addConfiguredToCart(catId, itemId, variantLabel || null, item.nome, basePrice, variant, escolheProteina);
+      addConfiguredToCart(catId, itemId, variantLabel || null, item.nome, basePrice, variant);
     });
   });
 
@@ -407,7 +278,7 @@ let appliedCupom = null;
 
 function cuponsUsados() {
   try {
-    return JSON.parse(localStorage.getItem('sep_cupons_usados') || '[]');
+    return JSON.parse(localStorage.getItem('porto_cupons_usados') || '[]');
   } catch (e) {
     return [];
   }
@@ -417,7 +288,7 @@ function marcarCupomUsado(codigo) {
     const usados = cuponsUsados();
     if (usados.indexOf(codigo) === -1) {
       usados.push(codigo);
-      localStorage.setItem('sep_cupons_usados', JSON.stringify(usados));
+      localStorage.setItem('porto_cupons_usados', JSON.stringify(usados));
     }
   } catch (e) {}
 }
@@ -442,7 +313,7 @@ function validarCupom(codigoDigitado, subtotal) {
 }
 let orderCounter = (() => {
   try {
-    return parseInt(localStorage.getItem('sep_order_seq') || '0', 10);
+    return parseInt(localStorage.getItem('porto_order_seq') || '0', 10);
   } catch (e) {
     return 0;
   }
@@ -450,7 +321,7 @@ let orderCounter = (() => {
 function nextOrderNumber() {
   orderCounter += 1;
   try {
-    localStorage.setItem('sep_order_seq', String(orderCounter));
+    localStorage.setItem('porto_order_seq', String(orderCounter));
   } catch (e) {}
   const now = new Date();
   return now.getFullYear().toString().slice(2) + pad2(now.getMonth() + 1) + pad2(now.getDate()) + '-' + orderCounter;
@@ -476,7 +347,7 @@ function buildOrderMessage(items, info, total, orderNumber, cupomAplicado) {
   const now = new Date();
   const dataHora = pad2(now.getDate()) + '/' + pad2(now.getMonth() + 1) + '/' + now.getFullYear() + ' ' + pad2(now.getHours()) + ':' + pad2(now.getMinutes());
   const lines = [];
-  lines.push('PEDIDO #' + orderNumber + ' - Sabor e Prosa');
+  lines.push('PEDIDO #' + orderNumber + ' - Porto Hamburgueria');
   lines.push('Data/Hora: ' + dataHora);
   lines.push('Tipo: ' + (info.modo === 'entrega' ? 'DELIVERY' : 'RETIRADA NO LOCAL'));
   if (info.formaPagamento) lines.push('Pagamento: ' + info.formaPagamento);
@@ -547,7 +418,7 @@ function openCartDrawer() {
     '<button type="button" class="chip' + (checkoutInfo.formaPagamento === 'Cartão' ? ' selected' : '') + '" data-pagamento="Cartão">Cartão</button>' +
     '<button type="button" class="chip' + (checkoutInfo.formaPagamento === 'Pix' ? ' selected' : '') + '" data-pagamento="Pix">Pix</button>' +
     '</div></div>' +
-    '<div class="field"><label for="ck-obs">Observações (opcional)</label><textarea id="ck-obs" placeholder="Ex: sem cebola, ponto da carne, troco para R$50...">' + checkoutInfo.obs + '</textarea></div>' +
+    '<div class="field"><label for="ck-obs">Observações (opcional)</label><textarea id="ck-obs" placeholder="Ex: troco para R$ 50, ponto de referência...">' + checkoutInfo.obs + '</textarea></div>' +
     '<a class="btn-primary" id="btn-checkout" href="https://wa.me/" style="text-decoration:none;text-align:center;display:block;">Enviar pedido pelo WhatsApp</a>' +
     '<button type="button" class="btn-ghost" id="btn-copiar-msg" style="width:100%;margin-top:10px;">Não abriu? Copiar mensagem do pedido</button>' +
     '<button type="button" class="btn-ghost" id="btn-fechar-drawer" style="width:100%;margin-top:10px;">Continuar comprando</button>' +
@@ -719,7 +590,7 @@ document.querySelectorAll('[data-admintab]').forEach((btn) => {
 });
 
 function renderAdmin() {
-  renderCardapioDiaAdmin();
+  renderAdicionaisAdmin();
   const wrap = document.getElementById('admin-categories');
   wrap.innerHTML = '';
   draft.categorias.forEach((cat) => {
@@ -761,91 +632,18 @@ function renderAdmin() {
   });
 }
 
-function renderCardapioDiaAdmin() {
+function renderAdicionaisAdmin() {
   const wrap = document.getElementById('admin-cardapio-dia');
-  if (!draft.cardapioDia) draft.cardapioDia = { proteina1: '', proteina2: '', feijaoOpcoes: [], legumesOpcoes: [], adicionaisOpcoes: [] };
-  const cd = draft.cardapioDia;
-  if (!cd.feijaoOpcoes) cd.feijaoOpcoes = [];
-  if (!cd.legumesOpcoes) cd.legumesOpcoes = [];
-  if (!cd.adicionaisOpcoes) cd.adicionaisOpcoes = [];
-
+  if (!Array.isArray(draft.adicionais)) draft.adicionais = [];
   const panel = document.createElement('div');
   panel.className = 'admin-panel';
   panel.innerHTML =
-    '<div class="section-label" style="margin-top:0;">Cardápio do dia</div>' +
-    '<p style="font-size:0.8rem;color:var(--ink-soft);margin:0 0 12px;">É aqui que você mesma muda o que varia todo dia: as 2 proteínas principais, as opções de feijão, de legume e a carne extra do buffet. Se algo acabar, é só remover ele daqui e clicar em "Publicar alterações" lá embaixo — não precisa esperar ninguém alterar pra você.</p>' +
-    '<div class="field" style="margin-top:0;"><label>Proteína principal 1</label><input type="text" class="admin-field-input" id="cd-proteina1" style="width:100%;"></div>' +
-    '<div class="field"><label>Proteína principal 2</label><input type="text" class="admin-field-input" id="cd-proteina2" style="width:100%;"></div>' +
-    '<div class="field"><label>Opções de feijão (o cliente escolhe entre elas só quando houver 2)</label><div id="cd-feijao-list"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:8px;"><input type="text" class="admin-field-input" id="cd-feijao-novo" style="flex:1;" placeholder="Ex: Feijão preto"><button class="small-btn" id="cd-feijao-add" type="button">+ Adicionar</button></div></div>' +
-    '<div class="field"><label>Opções de legume/refogado (o cliente escolhe entre eles só quando houver 2)</label><div id="cd-legume-list"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:8px;"><input type="text" class="admin-field-input" id="cd-legume-novo" style="flex:1;" placeholder="Ex: Abobrinha e cenoura refogada"><button class="small-btn" id="cd-legume-add" type="button">+ Adicionar</button></div></div>' +
-    '<div class="field"><label>Carne extra do buffet (vira adicional pago de R$ 25,00)</label><div id="cd-extra-list"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:8px;"><input type="text" class="admin-field-input" id="cd-extra-novo" style="flex:1;" placeholder="Ex: Costelinha suína frita"><button class="small-btn" id="cd-extra-add" type="button">+ Adicionar</button></div></div>';
+    '<div class="section-label" style="margin-top:0;">Adicionais dos lanches</div>' +
+    '<p style="font-size:0.8rem;color:var(--ink-soft);margin:0 0 12px;">Aparecem pra escolher em todo lanche. Se um acabar, marque "Acabou" e clique em "Publicar alterações" lá embaixo.</p>' +
+    '<div id="adicionais-editor"></div>';
   wrap.innerHTML = '';
   wrap.appendChild(panel);
-
-  const p1 = document.getElementById('cd-proteina1');
-  p1.value = cd.proteina1 || '';
-  p1.addEventListener('input', (e) => (cd.proteina1 = e.target.value));
-  const p2 = document.getElementById('cd-proteina2');
-  p2.value = cd.proteina2 || '';
-  p2.addEventListener('input', (e) => (cd.proteina2 = e.target.value));
-
-  function renderCdList(containerId, arr) {
-    const listEl = document.getElementById(containerId);
-    listEl.innerHTML = '';
-    arr.forEach((val, idx) => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:8px;';
-      const span = document.createElement('span');
-      span.style.cssText = 'flex:1;font-size:0.9rem;color:var(--ink);';
-      span.textContent = val;
-      const del = document.createElement('button');
-      del.className = 'icon-btn danger';
-      del.type = 'button';
-      del.textContent = '✕';
-      del.title = 'Remover';
-      del.addEventListener('click', () => {
-        arr.splice(idx, 1);
-        renderCardapioDiaAdmin();
-      });
-      row.appendChild(span);
-      row.appendChild(del);
-      listEl.appendChild(row);
-    });
-    if (!arr.length) {
-      const empty = document.createElement('p');
-      empty.style.cssText = 'font-size:0.8rem;color:var(--ink-soft);margin:8px 0 0;';
-      empty.textContent = 'Nenhuma opção cadastrada.';
-      listEl.appendChild(empty);
-    }
-  }
-  renderCdList('cd-feijao-list', cd.feijaoOpcoes);
-  renderCdList('cd-legume-list', cd.legumesOpcoes);
-  renderCdList('cd-extra-list', cd.adicionaisOpcoes);
-
-  document.getElementById('cd-feijao-add').addEventListener('click', () => {
-    const input = document.getElementById('cd-feijao-novo');
-    const val = input.value.trim();
-    if (!val) return;
-    cd.feijaoOpcoes.push(val);
-    renderCardapioDiaAdmin();
-  });
-  document.getElementById('cd-legume-add').addEventListener('click', () => {
-    const input = document.getElementById('cd-legume-novo');
-    const val = input.value.trim();
-    if (!val) return;
-    cd.legumesOpcoes.push(val);
-    renderCardapioDiaAdmin();
-  });
-  document.getElementById('cd-extra-add').addEventListener('click', () => {
-    const input = document.getElementById('cd-extra-novo');
-    const val = input.value.trim();
-    if (!val) return;
-    cd.adicionaisOpcoes.push(val);
-    renderCardapioDiaAdmin();
-  });
+  renderAdicionaisEditor(document.getElementById('adicionais-editor'), draft.adicionais);
 }
 
 function renderAdminItemRow(cat, item, idx) {
@@ -887,7 +685,7 @@ function renderAdminItemRow(cat, item, idx) {
   const descField = document.createElement('div');
   descField.className = 'admin-desc-field';
   const descTextarea = document.createElement('textarea');
-  descTextarea.placeholder = 'O que vem hoje (ex: arroz, feijão, frango grelhado, salada)';
+  descTextarea.placeholder = 'Ingredientes (ex: pão, hambúrguer, ovo, presunto, mussarela)';
   descTextarea.value = item.descricao || '';
   descTextarea.addEventListener('input', () => (item.descricao = descTextarea.value));
   descField.appendChild(descTextarea);
@@ -937,6 +735,16 @@ function renderAdminItemRow(cat, item, idx) {
     });
     row.appendChild(addVariantBtn);
   }
+
+  const lancheToggle = document.createElement('label');
+  lancheToggle.className = 'toggle-row';
+  const lancheCb = document.createElement('input');
+  lancheCb.type = 'checkbox';
+  lancheCb.checked = !!item.temAdicionais;
+  lancheCb.addEventListener('change', () => (item.temAdicionais = lancheCb.checked));
+  lancheToggle.appendChild(lancheCb);
+  lancheToggle.appendChild(document.createTextNode('É lanche (mostra adicionais e "tirar ingrediente")'));
+  row.appendChild(lancheToggle);
 
   const toggle = document.createElement('div');
   toggle.className = 'toggle-row';
@@ -1163,12 +971,12 @@ function comandaLines(text) {
   const parsed = parseOrderText(text);
   const out = [];
   if (!parsed) {
-    out.push('SABOR E PROSA');
+    out.push('PORTO HAMBURGUERIA');
     out.push('');
     text.trim().split('\n').forEach((l) => out.push(l));
     return out;
   }
-  out.push('Sabor e Prosa' + (parsed.pedidoNum ? '  #' + parsed.pedidoNum : ''));
+  out.push('Porto Hamburgueria' + (parsed.pedidoNum ? '  #' + parsed.pedidoNum : ''));
   out.push(parsed.dataHora || '');
   if (parsed.tipo) out.push('(' + parsed.tipo + ')');
   out.push('------------------------------');
@@ -1192,7 +1000,7 @@ function comandaLines(text) {
     out.push('Obs: ' + parsed.obs);
   }
   out.push('------------------------------');
-  out.push('Pedido feito pelo site - Sabor e Prosa');
+  out.push('Pedido feito pelo site - Porto Hamburgueria');
   return out;
 }
 
@@ -1216,7 +1024,7 @@ document.getElementById('btn-baixar-pdf').addEventListener('click', () => {
     alert('Cole o texto do pedido primeiro.');
     return;
   }
-  baixarComandaPdf(comandaLines(text), 'comanda-sabor-e-prosa-' + Date.now() + '.pdf');
+  baixarComandaPdf(comandaLines(text), 'comanda-porto-' + Date.now() + '.pdf');
 });
 
 /* ---------------- inicialização ---------------- */

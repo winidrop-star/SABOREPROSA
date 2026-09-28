@@ -1,21 +1,24 @@
-/* Sabor e Prosa — visual único (fundo marrom, caixas brancas) usado nos
-   dois apps (site do cliente e painel), igual à sinalização real da loja —
-   não se adapta à preferência de tema claro/escuro do visitante. */
+/* Porto Hamburgueria — visual único (fundo azul-marinho, caixas brancas)
+   usado nos dois apps (site do cliente e painel), com a paleta da marca:
+   #081c30 (fundo), #1f456f (botões), #8bc8e8 (destaques) e #1a1a1a (texto).
+   Não se adapta à preferência de tema claro/escuro do visitante.
+   As variáveis "--ink-on-brown*" guardam o texto sobre o fundo escuro. */
 :root{
-  --bg:#5C3A22;
+  --bg:#081c30;
   --surface:#FFFFFF;
-  --surface-2:#F2EBE3;
-  --ink:#241A12;
-  --ink-soft:#7A6552;
-  --ink-on-brown:#F4E9D8;
-  --ink-on-brown-soft:rgba(244,233,216,0.72);
-  --btn-bg:#241A12;
-  --btn-ink:#FDF8F0;
-  --accent-2:#4E6B4E;
-  --line:#241A12;
-  --line-soft:#E4DACE;
+  --surface-2:#EDF4FA;
+  --ink:#1a1a1a;
+  --ink-soft:#56687A;
+  --ink-on-brown:#F2F8FC;
+  --ink-on-brown-soft:rgba(242,248,252,0.7);
+  --brand-light:#8bc8e8;
+  --btn-bg:#1f456f;
+  --btn-ink:#FFFFFF;
+  --accent-2:#2F7A4D;
+  --line:#1f456f;
+  --line-soft:#D5E2EE;
   --danger:#A23B3B;
-  --shadow: 0 14px 34px -18px rgba(36,26,18,0.5);
+  --shadow: 0 14px 34px -18px rgba(0,0,0,0.6);
   --radius: 14px;
   --pending:#95661A;
   --pending-bg:#F3E6C8;
@@ -31,6 +34,7 @@
   --cancelado-bg:#F6DEDE;
 }
 *{box-sizing:border-box;}
+[hidden]{ display:none !important; }
 html,body{height:100%; overflow-x:hidden;}
 body{
   background:var(--bg);
@@ -39,7 +43,7 @@ body{
   padding-inline:16px;
   margin:0;
 }
-h1,h2,h3,.display{ font-family:'Inter',system-ui,sans-serif; text-wrap:balance; letter-spacing:-0.01em; font-weight:800; }
+h1,h2,h3,.display{ font-family:'Bree Serif',Georgia,serif; text-wrap:balance; letter-spacing:0; font-weight:400; }
 .mono{ font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums; }
 button{ font-family:inherit; }
 a{ color:var(--ink-on-brown); }
@@ -50,8 +54,8 @@ a{ color:var(--ink-on-brown); }
 .brand-panel{ display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-top:4px; }
 .brand-mark{ flex:none; width:64px; height:64px; border-radius:16px; overflow:hidden; box-shadow:var(--shadow); }
 .brand-mark img{ width:100%; height:100%; display:block; object-fit:cover; }
-.brand-name{ font-size:1.55rem; font-weight:800; margin:0 0 3px; color:var(--ink-on-brown); letter-spacing:-0.01em; }
-.brand-tag{ margin:0; color:var(--ink-on-brown-soft); font-size:0.85rem; }
+.brand-name{ font-size:1.7rem; font-weight:400; margin:0 0 3px; color:var(--ink-on-brown); letter-spacing:0.02em; }
+.brand-tag{ margin:0; color:var(--brand-light); font-size:0.85rem; }
 .status-banner{
   margin:0 0 18px; display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px;
   font-size:0.85rem; font-weight:700; background:var(--surface); border:1.5px solid var(--line); width:fit-content;
@@ -90,11 +94,11 @@ a{ color:var(--ink-on-brown); }
 .subtab-btn.active{ background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
 
 /* ---------- item cards / cardápio ---------- */
-.section-label{ font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-on-brown-soft); margin:24px 0 12px; }
+.section-label{ font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--brand-light); margin:24px 0 12px; }
 .item-card{ background:var(--surface); color:var(--ink); border:1.5px solid var(--line); border-radius:var(--radius); padding:16px 16px; margin-bottom:12px; position:relative; }
 .item-card.unavailable{ opacity:0.6; }
 .item-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-.item-name{ font-family:'Inter',system-ui,sans-serif; font-weight:700; font-size:1.05rem; }
+.item-name{ font-family:'Bree Serif',Georgia,serif; font-weight:400; font-size:1.12rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--btn-bg); }
 .item-desc{ color:var(--ink-soft); font-size:0.85rem; margin-top:5px; line-height:1.5; }
 .item-badge{ font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--danger); border:1.5px solid var(--danger); border-radius:6px; padding:2px 6px; white-space:nowrap; }
 .simple-row{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
@@ -137,13 +141,15 @@ a{ color:var(--ink-on-brown); }
 .chip.selected{ background:var(--btn-bg); border-color:var(--btn-bg); color:var(--btn-ink); }
 .chip.small{ padding:6px 12px; font-size:0.82rem; }
 
-/* marmita configuration (protein / beans / extras) */
-.marmita-config{ border-top:1px dashed var(--line-soft); padding-top:16px; margin-top:20px; }
-.marmita-config:first-of-type{ border-top:none; margin-top:6px; padding-top:0; }
+/* montagem do lanche (adicionais / tirar ingrediente) */
+.lanche-config{ border-top:1px dashed var(--line-soft); padding-top:16px; margin-top:20px; }
+.lanche-config:first-of-type{ border-top:none; margin-top:6px; padding-top:0; }
 .variant-label-row{ font-weight:700; font-size:0.95rem; margin-bottom:8px; color:var(--ink); }
 .config-group{ margin-bottom:10px; }
 .config-label{ font-size:0.76rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); margin-bottom:6px; }
 .config-note{ font-size:0.85rem; color:var(--ink-soft); margin-bottom:10px; font-style:italic; }
+.config-retirar{ width:100%; border:1.5px solid var(--line-soft); border-radius:10px; padding:9px 12px; font-family:inherit; font-size:0.9rem; background:var(--surface); color:var(--ink); }
+.config-retirar:focus{ outline:none; border-color:var(--btn-bg); }
 .config-footer{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; gap:10px; }
 .btn-add-config{ background:var(--btn-bg); border:1.5px solid var(--btn-bg); color:var(--btn-ink); padding:9px 18px; border-radius:999px; font-weight:700; font-size:0.85rem; cursor:pointer; white-space:nowrap; }
 .btn-add-config:disabled{ opacity:0.5; cursor:not-allowed; }
@@ -275,13 +281,14 @@ textarea#paste-box{ width:100%; min-height:150px; font-family:'IBM Plex Mono',mo
   #pedidos-list .empty-state, #lista-cozinha .empty-state{ grid-column:1 / -1; }
   #menu-list{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:12px; align-items:start; }
   #menu-list .item-card{ margin-bottom:0; }
+  #menu-list .section-label{ grid-column:1 / -1; margin-bottom:0; }
   .stat-grid{ grid-template-columns:repeat(4,1fr); }
 }
 
-/* fundo decorativo — desenho de linha sutil no fundo marrom em telas largas */
-#bg-decor{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; color:var(--ink-on-brown); display:none; }
+/* fundo decorativo — desenho de linha sutil (âncora, ondas, lanche) em telas largas */
+#bg-decor{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; color:var(--brand-light); display:none; }
 #bg-decor svg{ position:absolute; opacity:0.16; }
-#bg-decor .bg-leaf{ top:-50px; right:-40px; width:340px; height:340px; }
-#bg-decor .bg-wheat{ bottom:-30px; left:-10px; width:180px; height:330px; }
-#bg-decor .bg-panela{ bottom:20px; right:40px; width:230px; height:230px; }
+#bg-decor .bg-ancora{ top:-20px; right:-30px; width:320px; height:320px; }
+#bg-decor .bg-ondas{ bottom:-20px; left:-20px; width:360px; height:220px; }
+#bg-decor .bg-burger{ bottom:30px; right:40px; width:220px; height:220px; }
 @media (min-width:700px){ #bg-decor{ display:block; } }

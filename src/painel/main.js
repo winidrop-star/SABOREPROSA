@@ -1,6 +1,7 @@
 import { fmtBRL, fmtHora, fmtDataHora, inPeriodo } from '../lib/format.js';
 import { loadState, saveState } from '../lib/config.js';
 import { baixarComandaPdf } from '../lib/pdfComanda.js';
+import { novoConfig, somaAdicionais, montarDetalhe, configRowHtml, renderAdicionaisEditor } from '../lib/lanche.js';
 import { unlockAudio, playReadyChime, playNovoPedidoAlerta } from '../lib/audio.js';
 import {
   fetchPedidos,
@@ -16,7 +17,7 @@ const CAIXA_PIN = import.meta.env.VITE_CAIXA_PIN || '2707';
 
 const app = document.getElementById('app');
 
-let STATE = null; // { loja, cardapioDia, categorias, cupons } — vem do Supabase (config)
+let STATE = null; // { loja, adicionais, categorias, cupons } — vem do Supabase (config)
 let dbReady = false;
 
 let role = null;
@@ -128,8 +129,8 @@ function trocarPapel() {
 function topbarHtml(titulo) {
   return (
     '<div class="topbar"><div class="topbar-brand">' +
-    '<div class="topbar-logo"><img src="/logo.png" alt="Logo Sabor e Prosa"></div>' +
-    '<div><h1>Sabor e Prosa</h1><div class="role-pill">' + titulo + '</div></div>' +
+    '<div class="topbar-logo"><img src="/logo.png" alt="Logo Porto Hamburgueria"></div>' +
+    '<div><h1>Porto Hamburgueria</h1><div class="role-pill">' + titulo + '</div></div>' +
     '</div>' +
     '<button class="link-btn" id="btn-trocar">trocar papel</button></div>' +
     '<div id="conn-banner"></div>' +
@@ -192,7 +193,7 @@ function renderCaixa() {
   if (caixaTab === 'pedido') renderTabPedidoNovo();
   else if (caixaTab === 'pedidos') renderTabPedidos();
   else if (caixaTab === 'caixa') renderTabCaixaFinanceiro();
-  else if (caixaTab === 'cardapio') renderTabCardapioDia();
+  else if (caixaTab === 'cardapio') renderTabLoja();
   else renderTabRelatorios();
 }
 
@@ -215,143 +216,29 @@ function draftCartTotal() {
   return draftCartArray().reduce((s, i) => s + i.qty * i.unitPrice, 0);
 }
 
-/* ---------------- configuração da marmita (proteína / feijão / adicionais) ---------------- */
+/* ---------------- montagem do lanche (adicionais / tirar ingrediente) ---------------- */
 const draftConfigState = {};
 function draftConfigKeyFor(catId, itemId, variantLabel) {
   return catId + '::' + itemId + '::' + (variantLabel || '');
 }
 function getDraftConfigState(ckey) {
-  if (!draftConfigState[ckey]) draftConfigState[ckey] = { proteina: null, feijao: null, legume: null, adicionais: {} };
+  if (!draftConfigState[ckey]) draftConfigState[ckey] = novoConfig();
   return draftConfigState[ckey];
 }
-const ADICIONAIS_FIXOS = [
-  { nome: 'Batata Frita', preco: 25 },
-  { nome: 'Mix de Salada', preco: 3.5 },
-  { nome: 'Ovo', preco: 3.5 }
-];
-function getAdicionaisCatalogo() {
-  const cd = STATE.cardapioDia || {};
-  const lista = [];
-  if (cd.proteina1) lista.push({ nome: cd.proteina1, preco: 25 });
-  if (cd.proteina2) lista.push({ nome: cd.proteina2, preco: 25 });
-  (cd.adicionaisOpcoes || []).forEach((nome) => lista.push({ nome, preco: 25 }));
-  return lista.concat(ADICIONAIS_FIXOS);
-}
-function precoAdicional(nome) {
-  const found = getAdicionaisCatalogo().find((a) => a.nome === nome);
-  return found ? found.preco : 0;
-}
-function somaAdicionaisSelecionados(st) {
-  return Object.keys(st.adicionais)
-    .filter((k) => st.adicionais[k])
-    .reduce((sum, nome) => sum + precoAdicional(nome), 0);
-}
-function buildConfigVariantLabel(variant, escolheProteina, cd, st) {
-  const parts = [];
-  if (variant) parts.push(variant.label);
-  if (variant && variant.proteinasIncluidas && cd.proteina1 && cd.proteina2) {
-    parts.push(cd.proteina1 + ' e ' + cd.proteina2);
-  } else if (escolheProteina && st.proteina) {
-    parts.push(st.proteina);
-  }
-  if (st.feijao) parts.push(st.feijao);
-  if (st.legume) parts.push(st.legume);
-  const extras = Object.keys(st.adicionais).filter((k) => st.adicionais[k]);
-  if (extras.length) parts.push('+ ' + extras.join(', '));
-  return parts.join(', ');
-}
 function renderDraftConfigRow(cat, item, variant) {
-  const basePrice = variant ? variant.preco : item.preco;
-  const label = variant ? variant.label : null;
-  const ckey = draftConfigKeyFor(cat.id, item.id, label);
-  const escolheProteina = variant ? !!variant.escolheProteina : !!item.escolheProteina;
-  const proteinasIncluidas = variant ? !!variant.proteinasIncluidas : !!item.proteinasIncluidas;
-  const escolheFeijao = !!item.escolheFeijao;
-  const temAdicionais = !!item.temAdicionais;
-  const cd = STATE.cardapioDia || {};
-  const st = getDraftConfigState(ckey);
-
-  const totalUnit = basePrice + somaAdicionaisSelecionados(st);
-
-  let proteinaHtml = '';
-  if (escolheProteina && cd.proteina1 && cd.proteina2) {
-    proteinaHtml =
-      '<div class="config-group"><div class="config-label">Escolha a proteína</div><div class="chip-group">' +
-      [cd.proteina1, cd.proteina2]
-        .map((p) => '<button type="button" class="chip small config-proteina' + (st.proteina === p ? ' selected' : '') + '" data-configkey="' + ckey + '" data-value="' + p + '">' + p + '</button>')
-        .join('') +
-      '</div></div>';
-  } else if (proteinasIncluidas && cd.proteina1 && cd.proteina2) {
-    proteinaHtml =
-      '<div class="config-note"><strong>Já vem com ' + cd.proteina1 + ' e ' + cd.proteina2 + '.</strong> ' +
-      'Se o cliente quiser só uma das duas, anota na observação.</div>';
-  }
-
-  let feijaoHtml = '';
-  if (escolheFeijao && cd.feijaoOpcoes && cd.feijaoOpcoes.length >= 2) {
-    feijaoHtml =
-      '<div class="config-group"><div class="config-label">Escolha o feijão</div><div class="chip-group">' +
-      cd.feijaoOpcoes
-        .map((f) => '<button type="button" class="chip small config-feijao' + (st.feijao === f ? ' selected' : '') + '" data-configkey="' + ckey + '" data-value="' + f + '">' + f + '</button>')
-        .join('') +
-      '</div></div>';
-  }
-
-  let legumeHtml = '';
-  if (escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length >= 2) {
-    legumeHtml =
-      '<div class="config-group"><div class="config-label">Escolha o legume</div><div class="chip-group">' +
-      cd.legumesOpcoes
-        .map((l) => '<button type="button" class="chip small config-legume' + (st.legume === l ? ' selected' : '') + '" data-configkey="' + ckey + '" data-value="' + l + '">' + l + '</button>')
-        .join('') +
-      '</div></div>';
-  } else if (escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length === 1) {
-    legumeHtml = '<div class="config-note">Acompanha <strong>' + cd.legumesOpcoes[0] + '</strong>.</div>';
-  }
-
-  let adicionaisHtml = '';
-  if (temAdicionais) {
-    const catalogoAdicionais = getAdicionaisCatalogo();
-    if (catalogoAdicionais.length) {
-      adicionaisHtml =
-        '<div class="config-group"><div class="config-label">Adicionais</div><div class="chip-group">' +
-        catalogoAdicionais
-          .map((a) => '<button type="button" class="chip small config-adicional' + (st.adicionais[a.nome] ? ' selected' : '') + '" data-configkey="' + ckey + '" data-value="' + a.nome + '">' + a.nome + ' (+' + fmtBRL(a.preco) + ')</button>')
-          .join('') +
-        '</div></div>';
-    }
-  }
-
-  const proteinaOk = !(escolheProteina && cd.proteina1 && cd.proteina2) || st.proteina;
-  const feijaoOk = !(escolheFeijao && cd.feijaoOpcoes && cd.feijaoOpcoes.length >= 2) || st.feijao;
-  const legumeOk = !(escolheFeijao && cd.legumesOpcoes && cd.legumesOpcoes.length >= 2) || st.legume;
-  const podeAdicionar = proteinaOk && feijaoOk && legumeOk && item.disponivel;
-
-  return (
-    '<div class="marmita-config" data-configkey="' + ckey + '">' +
-    (label ? '<div class="variant-label-row">' + label + ' · <span class="price">' + fmtBRL(basePrice) + '</span></div>' : '') +
-    proteinaHtml +
-    feijaoHtml +
-    legumeHtml +
-    adicionaisHtml +
-    '<div class="config-footer">' +
-    '<span class="config-total mono price">' + fmtBRL(totalUnit) + '</span>' +
-    '<button type="button" class="btn-add-config" data-configkey="' + ckey + '"' + (podeAdicionar ? '' : ' disabled') + '>Adicionar</button>' +
-    '</div>' +
-    '</div>'
-  );
+  const ckey = draftConfigKeyFor(cat.id, item.id, variant ? variant.label : null);
+  return configRowHtml(STATE, item, variant, ckey, getDraftConfigState(ckey), item.disponivel);
 }
-function addDraftConfiguredToCart(catId, itemId, variantLabel, name, basePrice, variant, escolheProteina) {
+function addDraftConfiguredToCart(catId, itemId, variantLabel, name, basePrice, variant) {
   const ckey = draftConfigKeyFor(catId, itemId, variantLabel);
   const st = getDraftConfigState(ckey);
-  const cd = STATE.cardapioDia || {};
-  const unitPrice = basePrice + somaAdicionaisSelecionados(st);
-  const compositeLabel = buildConfigVariantLabel(variant, escolheProteina, cd, st);
-  const key = cartKey(catId, itemId, compositeLabel);
-  const current = draftCart[key] || { qty: 0, name, variant: compositeLabel || null, unitPrice };
+  const unitPrice = basePrice + somaAdicionais(STATE, st);
+  const detalhe = montarDetalhe(variant, st);
+  const key = cartKey(catId, itemId, detalhe);
+  const current = draftCart[key] || { qty: 0, name, variant: detalhe || null, unitPrice };
   current.qty += 1;
   draftCart[key] = current;
-  draftConfigState[ckey] = { proteina: null, feijao: null, legume: null, adicionais: {} };
+  draftConfigState[ckey] = novoConfig();
   renderTabPedidoNovo();
 }
 
@@ -392,7 +279,7 @@ function renderTabPedidoNovo() {
     '<button type="button" class="chip' + (draftFormaPagamento === 'Cartão' ? ' selected' : '') + '" data-pagamento="Cartão">Cartão</button>' +
     '<button type="button" class="chip' + (draftFormaPagamento === 'Pix' ? ' selected' : '') + '" data-pagamento="Pix">Pix</button>' +
     '</div></div>' +
-    '<div class="field"><label for="cx-obs">Observação</label><textarea id="cx-obs" placeholder="Ex: sem cebola..."></textarea></div>' +
+    '<div class="field"><label for="cx-obs">Observação</label><textarea id="cx-obs" placeholder="Ex: troco para R$ 50..."></textarea></div>' +
     '<button class="btn-primary" id="btn-enviar" disabled>Enviar pra cozinha</button>';
 
   const catTabs = document.getElementById('menu-cat-tabs');
@@ -414,7 +301,7 @@ function renderTabPedidoNovo() {
       const card = document.createElement('div');
       card.className = 'item-card' + (item.disponivel ? '' : ' unavailable');
       const descHtml = item.descricao ? '<div class="item-desc">' + item.descricao + '</div>' : '';
-      if (cat.id === 'marmitas') {
+      if (item.temAdicionais) {
         const configRowsHtml = item.tipo === 'simples' ? renderDraftConfigRow(cat, item, null) : item.variantes.map((v) => renderDraftConfigRow(cat, item, v)).join('');
         card.innerHTML = '<div class="item-top"><div class="item-name">' + item.nome + '</div></div>' + descHtml + configRowsHtml;
       } else if (item.tipo === 'simples') {
@@ -439,17 +326,16 @@ function renderTabPedidoNovo() {
     });
   }
 
-  listWrap.querySelectorAll('.config-proteina, .config-feijao, .config-legume, .config-adicional').forEach((btn) => {
+  listWrap.querySelectorAll('.config-adicional').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const ckey = btn.getAttribute('data-configkey');
+      const st = getDraftConfigState(btn.getAttribute('data-configkey'));
       const value = btn.getAttribute('data-value');
-      const st = getDraftConfigState(ckey);
-      if (btn.classList.contains('config-proteina')) st.proteina = st.proteina === value ? null : value;
-      else if (btn.classList.contains('config-feijao')) st.feijao = st.feijao === value ? null : value;
-      else if (btn.classList.contains('config-legume')) st.legume = st.legume === value ? null : value;
-      else st.adicionais[value] = !st.adicionais[value];
+      st.adicionais[value] = !st.adicionais[value];
       renderTabPedidoNovo();
     });
+  });
+  listWrap.querySelectorAll('.config-retirar').forEach((input) => {
+    input.addEventListener('input', () => (getDraftConfigState(input.getAttribute('data-configkey')).retirar = input.value));
   });
   listWrap.querySelectorAll('.btn-add-config').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -459,8 +345,7 @@ function renderTabPedidoNovo() {
       const it = findMenuItem(catId, itemId);
       const variant = variantLabel ? it.variantes.find((v) => v.label === variantLabel) : null;
       const basePrice = variant ? variant.preco : it.preco;
-      const escolheProteina = variant ? !!variant.escolheProteina : !!it.escolheProteina;
-      addDraftConfiguredToCart(catId, itemId, variantLabel || null, it.nome, basePrice, variant, escolheProteina);
+      addDraftConfiguredToCart(catId, itemId, variantLabel || null, it.nome, basePrice, variant);
     });
   });
 
@@ -704,19 +589,19 @@ function waNumberFromTelefone(tel) {
 }
 function buildConfirmacaoMsg(o) {
   const itensTxt = o.itens.map((i) => i.qtde + 'x ' + (i.nome + (i.variante ? ' (' + i.variante + ')' : ''))).join('\n');
-  const linhas = ['Oi ' + o.cliente + '! Seu pedido na Sabor e Prosa foi aceito e já está sendo preparado 🍱', '', itensTxt, '', 'Total: ' + fmtBRL(o.total || 0), ''];
+  const linhas = ['Oi ' + o.cliente + '! Seu pedido na Porto Hamburgueria foi aceito e já está sendo preparado 🍔', '', itensTxt, '', 'Total: ' + fmtBRL(o.total || 0), ''];
   linhas.push(o.modo === 'entrega' ? 'Assim que sair pra entrega a gente avisa!' : 'Te avisamos por aqui quando estiver pronto pra retirar.');
   return linhas.join('\n');
 }
 function buildProntoRetiradaMsg(o) {
-  return ['Oi ' + o.cliente + '! Seu pedido na Sabor e Prosa está pronto e te esperando no balcão 🍱', '', 'Total: ' + fmtBRL(o.total || 0), '', 'Muito obrigado pela preferência! Foi um prazer preparar seu pedido. 💛'].join('\n');
+  return ['Oi ' + o.cliente + '! Seu pedido na Porto Hamburgueria está pronto e te esperando no balcão 🍔', '', 'Total: ' + fmtBRL(o.total || 0), '', 'Muito obrigado pela preferência! Foi um prazer preparar seu pedido. 💛'].join('\n');
 }
 function buildMotoboySaiuMsg(o) {
-  return ['Oi ' + o.cliente + '! Seu pedido da Sabor e Prosa acabou de sair para entrega com o motoboy 🛵🍱', '', 'Total: ' + fmtBRL(o.total || 0), '', 'Chega até você em instantes. Obrigado pela preferência! 💛'].join('\n');
+  return ['Oi ' + o.cliente + '! Seu pedido da Porto Hamburgueria acabou de sair para entrega com o motoboy 🛵🍔', '', 'Total: ' + fmtBRL(o.total || 0), '', 'Chega até você em instantes. Obrigado pela preferência! 💛'].join('\n');
 }
 function buildComandaLines(o) {
   const linhas = [];
-  linhas.push('SABOR E PROSA');
+  linhas.push('PORTO HAMBURGUERIA');
   linhas.push(fmtHora(o.criadoEm) + ' · ' + (o.modo === 'entrega' ? 'ENTREGA' : 'RETIRADA'));
   linhas.push('------------------------------');
   linhas.push('Cliente: ' + o.cliente);
@@ -910,20 +795,17 @@ function renderMovForm() {
   });
 }
 
-/* ---------------- ABA: Cardápio do dia ---------------- */
-let draftCardapio = null;
+/* ---------------- ABA: Loja & cardápio (horário + adicionais) ---------------- */
+let draftAdicionais = null;
 let draftLoja = null;
 
-function renderTabCardapioDia() {
-  if (!draftCardapio) draftCardapio = JSON.parse(JSON.stringify(STATE.cardapioDia));
+function renderTabLoja() {
+  if (!draftAdicionais) draftAdicionais = JSON.parse(JSON.stringify(STATE.adicionais || []));
   if (!draftLoja) draftLoja = JSON.parse(JSON.stringify(STATE.loja));
-  const cd = draftCardapio;
+  const cd = draftAdicionais;
   const lj = draftLoja;
-  if (!cd.feijaoOpcoes) cd.feijaoOpcoes = [];
-  if (!cd.legumesOpcoes) cd.legumesOpcoes = [];
-  if (!cd.adicionaisOpcoes) cd.adicionaisOpcoes = [];
-  if (!lj.horarioAbre) lj.horarioAbre = '10:30';
-  if (!lj.horarioFecha) lj.horarioFecha = '13:30';
+  if (!lj.horarioAbre) lj.horarioAbre = '18:00';
+  if (!lj.horarioFecha) lj.horarioFecha = '23:30';
   if (!lj.modo) lj.modo = lj.forcarAberta ? 'forcar_aberta' : lj.aberta === false ? 'forcar_fechada' : 'auto';
 
   const wrap = document.getElementById('caixa-body');
@@ -939,19 +821,12 @@ function renderTabCardapioDia() {
     '<div class="field" style="margin-top:0;"><label for="lj-horario-abre">Abre às</label><input id="lj-horario-abre" type="time"></div>' +
     '<div class="field" style="margin-top:0;"><label for="lj-horario-fecha">Fecha às</label><input id="lj-horario-fecha" type="time"></div>' +
     '</div>' +
-    '<p style="font-size:0.8rem;color:var(--ink-soft);margin:8px 0 0;">No modo "Automático" a loja abre e fecha sozinha nesse horário, todo dia. Use "Forçar" pra abrir fora do horário ou fechar antes (ex: acabou a comida).</p>' +
+    '<p style="font-size:0.8rem;color:var(--ink-soft);margin:8px 0 0;">No modo "Automático" a loja abre e fecha sozinha nesse horário, todo dia. Se fechar depois da meia-noite (ex: 18:00 às 00:30) também funciona. Use "Forçar" pra abrir fora do horário ou fechar antes.</p>' +
     '</div>' +
     '<div class="form-panel">' +
-    '<div class="section-label" style="margin-top:0;">Cardápio do dia</div>' +
-    '<p style="font-size:0.85rem;color:var(--ink-soft);margin:0 0 4px;">É aqui que você mesma muda o que varia todo dia: as 2 proteínas principais, as opções de feijão e a carne extra do buffet. Se um feijão acabar, remove ele daqui e clica em "Publicar alterações" — não precisa esperar ninguém mudar pra você.</p>' +
-    '<div class="field" style="margin-top:10px;"><label for="cd-proteina1">Proteína principal 1</label><input id="cd-proteina1" type="text"></div>' +
-    '<div class="field"><label for="cd-proteina2">Proteína principal 2</label><input id="cd-proteina2" type="text"></div>' +
-    '<div class="field"><label>Opções de feijão (o cliente só escolhe quando houver 2)</label><div id="cd-feijao-list"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:8px;"><input id="cd-feijao-novo" type="text" placeholder="Ex: Feijão preto" style="flex:1;"><button class="btn-ghost" id="cd-feijao-add" type="button">+ Adicionar</button></div></div>' +
-    '<div class="field"><label>Opções de legume/refogado (o cliente só escolhe quando houver 2)</label><div id="cd-legume-list"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:8px;"><input id="cd-legume-novo" type="text" placeholder="Ex: Abobrinha e cenoura refogada" style="flex:1;"><button class="btn-ghost" id="cd-legume-add" type="button">+ Adicionar</button></div></div>' +
-    '<div class="field"><label>Carne extra do buffet (vira adicional pago de R$ 25,00)</label><div id="cd-extra-list"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:8px;"><input id="cd-extra-novo" type="text" placeholder="Ex: Costelinha suína frita" style="flex:1;"><button class="btn-ghost" id="cd-extra-add" type="button">+ Adicionar</button></div></div>' +
+    '<div class="section-label" style="margin-top:0;">Adicionais dos lanches</div>' +
+    '<p style="font-size:0.85rem;color:var(--ink-soft);margin:0 0 10px;">Aparecem pra escolher em todo lanche. Se um acabar, marque "Acabou" e clique em "Publicar alterações".</p>' +
+    '<div id="adicionais-editor"></div>' +
     '<div style="display:flex;gap:10px;margin-top:16px;">' +
     '<button class="btn-ghost" id="cd-descartar" type="button" style="flex:1;">Descartar</button>' +
     '<button class="btn-primary" id="cd-publicar" type="button" style="flex:1;margin-top:0;">Publicar alterações</button>' +
@@ -963,7 +838,7 @@ function renderTabCardapioDia() {
     chip.classList.toggle('selected', chip.getAttribute('data-modo') === lj.modo);
     chip.addEventListener('click', () => {
       lj.modo = chip.getAttribute('data-modo');
-      renderTabCardapioDia();
+      renderTabLoja();
     });
   });
   document.getElementById('lj-horario-abre').value = lj.horarioAbre;
@@ -971,79 +846,21 @@ function renderTabCardapioDia() {
   document.getElementById('lj-horario-fecha').value = lj.horarioFecha;
   document.getElementById('lj-horario-fecha').addEventListener('input', (e) => (lj.horarioFecha = e.target.value));
 
-  document.getElementById('cd-proteina1').value = cd.proteina1 || '';
-  document.getElementById('cd-proteina1').addEventListener('input', (e) => (cd.proteina1 = e.target.value));
-  document.getElementById('cd-proteina2').value = cd.proteina2 || '';
-  document.getElementById('cd-proteina2').addEventListener('input', (e) => (cd.proteina2 = e.target.value));
-
-  function renderCdList(containerId, arr) {
-    const listEl = document.getElementById(containerId);
-    listEl.innerHTML = '';
-    arr.forEach((val, idx) => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:8px;';
-      const span = document.createElement('span');
-      span.style.cssText = 'flex:1;font-size:0.9rem;color:var(--ink);';
-      span.textContent = val;
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.title = 'Remover';
-      del.textContent = '✕';
-      del.style.cssText = 'border:1.5px solid var(--cancelado);color:var(--cancelado);background:var(--surface);border-radius:8px;width:32px;height:32px;cursor:pointer;flex:none;';
-      del.addEventListener('click', () => {
-        arr.splice(idx, 1);
-        renderTabCardapioDia();
-      });
-      row.appendChild(span);
-      row.appendChild(del);
-      listEl.appendChild(row);
-    });
-    if (!arr.length) {
-      const empty = document.createElement('p');
-      empty.style.cssText = 'font-size:0.8rem;color:var(--ink-soft);margin:8px 0 0;';
-      empty.textContent = 'Nenhuma opção cadastrada.';
-      listEl.appendChild(empty);
-    }
-  }
-  renderCdList('cd-feijao-list', cd.feijaoOpcoes);
-  renderCdList('cd-legume-list', cd.legumesOpcoes);
-  renderCdList('cd-extra-list', cd.adicionaisOpcoes);
-
-  document.getElementById('cd-feijao-add').addEventListener('click', () => {
-    const input = document.getElementById('cd-feijao-novo');
-    const val = input.value.trim();
-    if (!val) return;
-    cd.feijaoOpcoes.push(val);
-    renderTabCardapioDia();
-  });
-  document.getElementById('cd-legume-add').addEventListener('click', () => {
-    const input = document.getElementById('cd-legume-novo');
-    const val = input.value.trim();
-    if (!val) return;
-    cd.legumesOpcoes.push(val);
-    renderTabCardapioDia();
-  });
-  document.getElementById('cd-extra-add').addEventListener('click', () => {
-    const input = document.getElementById('cd-extra-novo');
-    const val = input.value.trim();
-    if (!val) return;
-    cd.adicionaisOpcoes.push(val);
-    renderTabCardapioDia();
-  });
+  renderAdicionaisEditor(document.getElementById('adicionais-editor'), cd);
   document.getElementById('cd-descartar').addEventListener('click', () => {
-    draftCardapio = JSON.parse(JSON.stringify(STATE.cardapioDia));
+    draftAdicionais = JSON.parse(JSON.stringify(STATE.adicionais || []));
     draftLoja = JSON.parse(JSON.stringify(STATE.loja));
-    renderTabCardapioDia();
+    renderTabLoja();
   });
-  document.getElementById('cd-publicar').addEventListener('click', publicarCardapioDia);
+  document.getElementById('cd-publicar').addEventListener('click', publicarLoja);
 }
 
-async function publicarCardapioDia() {
+async function publicarLoja() {
   const statusEl = document.getElementById('cd-status');
   statusEl.textContent = 'Publicando...';
   try {
-    await saveState({ cardapioDia: draftCardapio, loja: draftLoja });
-    STATE.cardapioDia = draftCardapio;
+    await saveState({ adicionais: draftAdicionais, loja: draftLoja });
+    STATE.adicionais = draftAdicionais;
     STATE.loja = draftLoja;
     statusEl.textContent = 'Atualizado! (já vale no site também)';
   } catch (err) {

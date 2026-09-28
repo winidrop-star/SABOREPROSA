@@ -65,10 +65,10 @@ export function playReadyChime(nomeCliente) {
     }
   } catch (e) {}
   const nome = (nomeCliente || '').trim();
-  falar(nome ? 'A marmita de ' + nome + ' está pronta!' : 'A marmita está pronta!');
+  falar(nome ? 'O pedido de ' + nome + ' está pronto!' : 'O pedido está pronto!');
   notificarDesktop(
     'Pedido pronto!',
-    nome ? 'A marmita de ' + nome + ' está pronta pra entrega ou retirada.' : 'A marmita está pronta pra entrega ou retirada.'
+    nome ? 'O pedido de ' + nome + ' está pronto pra entrega ou retirada.' : 'O pedido está pronto pra entrega ou retirada.'
   );
 }
 
@@ -81,6 +81,6 @@ export function playNovoPedidoAlerta() {
       beep(880, now + 0.18, 0.22);
     }
   } catch (e) {}
-  falar('Tem marmita, confirme para iniciar o preparo.');
-  notificarDesktop('Novo pedido!', 'Chegou um pedido de marmita pra cozinha.');
+  falar('Chegou pedido novo, confirme para iniciar o preparo.');
+  notificarDesktop('Novo pedido!', 'Chegou um pedido novo pra cozinha.');
 }
