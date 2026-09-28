@@ -31,7 +31,7 @@
   }
   *{ box-sizing:border-box; }
   html,body{ margin:0; background:var(--bg); color:var(--text); }
-  body{ font:18px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+  body{ font:18px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding-bottom:calc(24px + env(safe-area-inset-bottom)); }
   main{ max-width:560px; margin:0 auto; padding:16px; }
   h1{ font-size:1.5rem; margin:4px 0 14px; }
   h2{ font-size:1.2rem; margin:0 0 10px; }
@@ -77,24 +77,78 @@
   .lista li:last-child{ border-bottom:0; }
   .lista .num{ font-size:1.4rem; font-weight:800; min-width:64px; }
   .lista .info{ flex:1; }
-  nav{
-    position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--card); border-top:1px solid var(--line);
-    padding-bottom:env(safe-area-inset-bottom); z-index:5;
+  .topbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; background:var(--card);
+    border-bottom:1px solid var(--line); padding:calc(6px + env(safe-area-inset-top)) 12px 6px; }
+  .topbar b{ font-size:1.1rem; }
+  #menuBtn{ width:52px; min-height:48px; margin:0; padding:0; font-size:1.6rem; background:transparent; color:var(--text); }
+  .lateral{ position:fixed; top:0; bottom:0; left:0; width:272px; max-width:85vw; z-index:40; background:var(--card);
+    border-right:1px solid var(--line); overflow:auto; transform:translateX(-102%); transition:transform .2s ease;
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom)); }
+  .lateral.aberta{ transform:none; box-shadow:0 0 40px rgba(0,0,0,.25); }
+  .lateral .marca{ display:flex; align-items:center; gap:10px; padding:4px 8px 14px; font-weight:800; font-size:1.1rem; }
+  .lateral .marca img{ width:40px; height:40px; border-radius:10px; }
+  .lateral button{ display:flex; align-items:center; gap:12px; text-align:left; min-height:52px; margin:2px 0; padding:8px 12px;
+    background:transparent; color:var(--text); font-weight:600; border-radius:12px; }
+  .lateral button span{ font-size:1.4rem; width:30px; text-align:center; }
+  .lateral button.on{ background:var(--ok-bg); color:var(--brand); }
+  .lateral button.sos{ background:var(--bad); color:#fff; margin-top:14px; }
+  .lateral hr{ border:0; border-top:1px solid var(--line); margin:8px 0; }
+  #veu{ position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:35; display:none; }
+  #veu.on{ display:block; }
+  @media (min-width:900px){
+    .lateral{ transform:none; box-shadow:none; }
+    #menuBtn, #veu{ display:none !important; }
+    body{ padding-left:272px; }
   }
-  nav button{ flex:1; margin:0; border-radius:0; background:transparent; color:var(--muted); min-height:68px; font-size:.82rem; padding:6px 2px; }
-  nav button span{ display:block; font-size:1.5rem; line-height:1.2; }
-  nav button.on{ color:var(--brand); }
+  .atalhos{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .atalhos button{ margin:0; min-height:96px; background:var(--card); color:var(--text); border:1px solid var(--line); }
+  .atalhos button span{ display:block; font-size:2rem; line-height:1.2; }
+  .resumo-linha{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+  .resumo-linha:last-child{ border-bottom:0; }
+  .resumo-linha .info{ flex:1; }
   .sobre{ position:fixed; inset:0; background:var(--bg); z-index:10; overflow:auto; }
   .fecha{ position:sticky; top:0; }
   .kv p{ margin:4px 0; }
   .kv b{ display:inline-block; min-width:110px; }
-  .toast{ position:fixed; left:16px; right:16px; bottom:96px; max-width:528px; margin:0 auto; background:var(--text); color:var(--bg);
+  .kpis{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kpi{ background:var(--bg); border-radius:12px; padding:12px; }
+  .kpi small{ display:block; color:var(--muted); font-size:.8rem; font-weight:600; }
+  .kpi b{ font-size:1.7rem; line-height:1.2; }
+  .barra{ display:flex; gap:2px; height:22px; margin:12px 0 6px; }
+  .barra span{ display:block; height:100%; min-width:4px; }
+  .barra span:first-child{ border-radius:6px 0 0 6px; } .barra span:last-child{ border-radius:0 6px 6px 0; }
+  .legenda{ display:flex; flex-wrap:wrap; gap:4px 14px; font-size:.85rem; color:var(--muted); }
+  .legenda i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; }
+  .medalhas{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; text-align:center; }
+  .medalha{ font-size:.72rem; font-weight:600; color:var(--muted); line-height:1.2; }
+  .medalha span{ display:block; font-size:2rem; line-height:1.3; }
+  .medalha.nao span{ filter:grayscale(1); opacity:.3; }
+  .medalha.sim{ color:var(--text); }
+  .estoque-linha{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .estoque-linha:last-child{ border-bottom:0; }
+  .estoque-linha .info{ flex:1; }
+  .estoque-linha input{ width:84px; text-align:center; font-weight:700; }
+  table.rel{ width:100%; border-collapse:collapse; font-size:.85rem; }
+  table.rel th, table.rel td{ text-align:left; padding:5px 4px; border-bottom:1px solid var(--line); }
+  @media print{
+    :root{ --bg:#fff; --card:#fff; --text:#111; --muted:#555; --line:#ccc;
+      --ok:#15803d; --ok-bg:#e8f6ec; --warn:#a16207; --warn-bg:#fdf6d8; --alto:#c2410c; --alto-bg:#fdeee4; --bad:#b91c1c; --bad-bg:#fde8e8; }
+    body{ padding:0; font-size:12px; background:#fff; }
+    .topbar, .lateral, #veu, #sobre, .noprint, .toast{ display:none !important; }
+    body{ padding-left:0 !important; }
+    .card{ break-inside:avoid; }
+    .kpis{ grid-template-columns:repeat(4, 1fr); }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+  .toast{ position:fixed; left:16px; right:16px; bottom:calc(24px + env(safe-area-inset-bottom)); max-width:528px; margin:0 auto; background:var(--text); color:var(--bg);
     padding:14px 16px; border-radius:12px; font-weight:600; z-index:20; text-align:center; }
 </style>
 </head>
 <body>
+<header class="topbar"><button id="menuBtn" aria-label="Abrir menu">☰</button><b id="titulo"></b></header>
+<aside id="lateral" class="lateral" aria-label="Menu"></aside>
+<div id="veu"></div>
 <main id="app"></main>
-<nav id="nav"></nav>
 <div id="sobre"></div>
 
 <script>
@@ -112,20 +166,26 @@ const PADRAO = {
     insulina: true,
     // Faixas (mg/dL). Os valores padrão seguem recomendações gerais;
     // devem ser confirmados/ajustados com o médico.
-    hipo: 70, baixo: 90, alto: 250, muitoAlto: 300,
+    hipo: 70, baixo: 90, metaMax: 180, alto: 250, muitoAlto: 300,
     esperaDepois: 20,
+    validadeCaneta: 28, unidadesCaneta: 300,
     contatoNome: '', contatoTel: '',
     tipo: '', remedios: '', alergias: '', medico: '', obs: ''
   },
   glicemias: [],   // { t, v, m }  (hora, valor, momento)
   insulinas: [],   // { t, u, tipo, local }  (hora, unidades, Rápida/Lenta, local)
-  corridas: [],    // { inicio, fim, antes, depois, km, caminhada }
+  corridas: [],    // { ex, inicio, fim, antes, depois, km, caminhada }
+  // Estoque: quantidades guardadas. Fitas e agulhas descontam sozinhas a cada registro.
+  estoque: { fitas: 0, lancetas: 0, agulhas: 0, canetaRapida: 0, canetaLenta: 0 },
+  canetas: { 'Rápida': null, 'Lenta': null },   // caneta em uso: { aberta, restante }
   run: null        // corrida em andamento
 };
 
 let D = carregar();
 let aba = 'inicio';
 let momentoSel = null;
+let tagsSel = [];
+const TAGS = ['😰 Estresse', '🤒 Doente', '🍺 Álcool', '🍰 Doce', '🍽️ Comi muito'];
 let insTipo = null, insLocal = null;
 const LOCAIS = ['Barriga', 'Braço', 'Coxa', 'Nádega'];
 // Tipos de exercício e os textos de cada um
@@ -145,10 +205,16 @@ const exDe = (r) => EX[r?.ex] || EX.Corrida;
 let sobre = null;          // 'ficha' | 'hipo'
 let hipoAte = null;
 
+// Junta os dados salvos com os padrões (pra versões antigas continuarem funcionando)
+function normalizar(s){
+  const p = JSON.parse(JSON.stringify(PADRAO));
+  return { ...p, ...s, insulinas: s.insulinas || [], cfg: { ...p.cfg, ...s.cfg },
+    estoque: { ...p.estoque, ...s.estoque }, canetas: { ...p.canetas, ...s.canetas } };
+}
 function carregar(){
   try{
     const s = JSON.parse(localStorage.getItem(CHAVE));
-    if(s) return { ...PADRAO, ...s, insulinas: s.insulinas || [], cfg: { ...PADRAO.cfg, ...s.cfg } };
+    if(s) return normalizar(s);
   }catch(e){}
   return JSON.parse(JSON.stringify(PADRAO));
 }
@@ -193,8 +259,8 @@ function numero(id){
 function cor(v){
   const c = D.cfg;
   if(v < c.hipo) return 'vermelho';
-  if(v < c.baixo) return 'amarelo';
-  if(v <= c.alto) return 'verde';
+  if(v <= c.metaMax) return 'verde';
+  if(v <= c.alto) return 'amarelo';
   if(v <= c.muitoAlto) return 'laranja';
   return 'vermelho';
 }
@@ -220,8 +286,9 @@ function vereditoCorrida(v, e){
 function vereditoGeral(v){
   const k = cor(v), c = D.cfg;
   if(v < c.hipo) return { cor:k, titulo:'Glicose baixa!', texto:'Siga o plano de glicose baixa agora.' };
-  if(v < c.baixo) return { cor:k, titulo:'Um pouco baixa', texto:'Fique atento. Se for fazer exercício, coma algo antes.' };
-  if(v <= c.alto) return { cor:k, titulo:'Na faixa 👍', texto:'Tudo certo.' };
+  if(v < c.baixo) return { cor:k, titulo:'Na meta, mas no limite de baixo', texto:'Se for fazer exercício, coma algo antes.' };
+  if(v <= c.metaMax) return { cor:k, titulo:'Na meta 👍', texto:'Tudo certo.' };
+  if(v <= c.alto) return { cor:k, titulo:'Um pouco acima da meta', texto:'Beba água e fique atento.' };
   if(v <= c.muitoAlto) return { cor:k, titulo:'Alta', texto:'Beba água e fique atento. Siga a orientação do seu médico.' };
   return { cor:k, titulo:'Muito alta', texto:'Beba água. Se continuar alta nas próximas medidas, fale com o médico.' };
 }
@@ -237,9 +304,102 @@ function localSugerido(){
 const minutosDesde = (t) => Math.round((agora() - t) / 60000);
 const tempoDesde = (t) => { const m = minutosDesde(t); return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`; };
 
-function registrar(v, m){
-  D.glicemias.push({ t: agora(), v, m });
+function registrar(v, m, tags){
+  D.glicemias.push({ t: agora(), v, m, ...(tags && tags.length ? { tags } : {}) });
+  if(D.estoque.fitas > 0) D.estoque.fitas--;
   salvar();
+}
+
+/* ---------- números do mês ---------- */
+const DIA = 864e5;
+const media = (l) => l.length ? Math.round(l.reduce((a, b) => a + b, 0) / l.length) : null;
+function estat(dias = 30){
+  const c = D.cfg, g = D.glicemias.filter((x) => x.t > agora() - dias * DIA), vs = g.map((x) => x.v);
+  const n = vs.length, pct = (f) => n ? Math.round(vs.filter(f).length / n * 100) : 0;
+  const m = media(vs);
+  const diasCom = new Set(g.map((x) => hojeStr(x.t))).size;
+  return {
+    g, n, media: m, diasCom,
+    baixa: pct((v) => v < c.hipo),
+    meta: pct((v) => v >= c.hipo && v <= c.metaMax),
+    acima: pct((v) => v > c.metaMax && v <= c.alto),
+    alta: pct((v) => v > c.alto),
+    hipos: vs.filter((v) => v < c.hipo).length,
+    // Hemoglobina glicada estimada (fórmula ADAG: A1c = (média + 46,7) / 28,7).
+    // Só mostra com medidas suficientes, espalhadas por pelo menos 7 dias.
+    a1c: n >= 20 && diasCom >= 7 ? Math.round((m + 46.7) / 28.7 * 10) / 10 : null
+  };
+}
+// Padrões: horários ou situações em que a glicose costuma sair da meta
+const PERIODOS = [['madrugada', 0, 6], ['manhã', 6, 12], ['tarde', 12, 18], ['noite', 18, 24]];
+function padroes(){
+  const c = D.cfg, g = D.glicemias.filter((x) => x.t > agora() - 14 * DIA), out = [];
+  PERIODOS.forEach(([nome, a, b]) => {
+    const l = g.filter((x) => { const h = new Date(x.t).getHours(); return h >= a && h < b; });
+    const m = media(l.map((x) => x.v)), baixas = l.filter((x) => x.v < c.hipo).length;
+    if(baixas >= 2) out.push({ cor: 'vermelho', txt: `Teve <b>${baixas} glicoses baixas</b> de ${nome} nas últimas 2 semanas.` });
+    if(l.length >= 3 && m > c.metaMax) out.push({ cor: 'amarelo', txt: `De ${nome} sua glicose costuma ficar <b>acima da meta</b> (média ${m}).` });
+  });
+  TAGS.forEach((t) => {
+    const l = g.filter((x) => x.tags?.includes(t)), m = media(l.map((x) => x.v));
+    if(l.length >= 2 && m > c.metaMax) out.push({ cor: 'amarelo', txt: `Quando marca <b>${t}</b>, a média fica em ${m}.` });
+  });
+  return out;
+}
+// Dias seguidos com pelo menos uma medida
+function sequencia(){
+  const dias = new Set(D.glicemias.map((x) => hojeStr(x.t)));
+  const d = new Date(); if(!dias.has(d.toDateString())) d.setDate(d.getDate() - 1);
+  let n = 0; while(dias.has(d.toDateString())){ n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function maiorSequencia(){
+  const dias = [...new Set(D.glicemias.map((x) => { const d = new Date(x.t); d.setHours(12, 0, 0, 0); return d.getTime(); }))].sort((a, b) => a - b);
+  let melhor = 0, atual = 0, ant = null;
+  dias.forEach((t) => { atual = ant !== null && Math.round((t - ant) / DIA) === 1 ? atual + 1 : 1; melhor = Math.max(melhor, atual); ant = t; });
+  return melhor;
+}
+function medalhas(){
+  const seq = maiorSequencia(), ex = D.corridas.length, s7 = estat(7);
+  const ult = D.insulinas.slice(-8);
+  const rodizio = ult.length >= 8 && ult.every((x, i) => i === 0 || x.local !== ult[i - 1].local);
+  return [
+    ['🩸', 'Primeira medida', D.glicemias.length >= 1],
+    ['🔥', '7 dias seguidos', seq >= 7],
+    ['🏆', '30 dias seguidos', seq >= 30],
+    ['💯', '100 medidas', D.glicemias.length >= 100],
+    ['👟', '10 exercícios', ex >= 10],
+    ['🥇', '50 exercícios', ex >= 50],
+    ['🎯', 'Semana 70% na meta', s7.n >= 7 && s7.meta >= 70],
+    ['💉', 'Rodízio certinho', rodizio]
+  ];
+}
+
+/* ---------- estoque ---------- */
+// Quantos por dia ele usa (média dos últimos 14 dias)
+function usoPorDia(lista){
+  const l = lista.filter((x) => x.t > agora() - 14 * DIA);
+  if(!l.length) return 0;
+  const inicio = Math.max(Math.min(...l.map((x) => x.t)), agora() - 14 * DIA);
+  return l.length / Math.max(1, (agora() - inicio) / DIA);
+}
+function avisosEstoque(){
+  const e = D.estoque, c = D.cfg, out = [];
+  const dura = (qtd, porDia) => porDia > 0 ? Math.floor(qtd / porDia) : null;
+  const fd = dura(e.fitas, usoPorDia(D.glicemias));
+  if(fd !== null && fd <= 7) out.push(`Fitas acabam em ~${fd} dia${fd === 1 ? '' : 's'} (${e.fitas} restantes).`);
+  const ad = dura(e.agulhas, usoPorDia(D.insulinas));
+  if(ad !== null && ad <= 7) out.push(`Agulhas acabam em ~${ad} dia${ad === 1 ? '' : 's'} (${e.agulhas} restantes).`);
+  ['Rápida', 'Lenta'].forEach((tp) => {
+    const cn = D.canetas[tp]; if(!cn) return;
+    const vence = Math.ceil((cn.aberta + c.validadeCaneta * DIA - agora()) / DIA);
+    if(vence <= 0) out.push(`A caneta ${tp.toLowerCase()} aberta <b>venceu</b>. Abra uma nova.`);
+    else if(vence <= 3) out.push(`A caneta ${tp.toLowerCase()} aberta vence em ${vence} dia${vence === 1 ? '' : 's'}.`);
+    if(cn.restante <= 30) out.push(`A caneta ${tp.toLowerCase()} está no fim (~${Math.max(0, Math.round(cn.restante))} unidades).`);
+    const fechadas = tp === 'Rápida' ? e.canetaRapida : e.canetaLenta;
+    if(fechadas === 0 && (vence <= 7 || cn.restante <= 100)) out.push(`Não tem caneta ${tp.toLowerCase()} de reserva. Compre mais.`);
+  });
+  return out;
 }
 
 /* ---------- WhatsApp / localização ---------- */
@@ -327,28 +487,25 @@ function telaInicio(){
   const saud = new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite';
 
   let html = `<h1>${saud}${c.nome ? ', ' + esc(c.nome) : ''}!</h1>`;
+  const seq = sequencia(), s7 = estat(7);
+  if(seq || s7.n) html += `<p style="margin:-6px 0 14px">${seq ? `🔥 <b>${seq} dia${seq > 1 ? 's' : ''} seguido${seq > 1 ? 's' : ''}</b> anotando` : ''}${seq && s7.n ? ' · ' : ''}${s7.n ? `🎯 Semana: <b>${s7.meta}%</b> na meta` : ''}</p>`;
+  const avE = avisosEstoque();
+  if(avE.length) html += `<div class="aviso laranja" style="margin:0 0 14px"><b class="big">📦 Atenção ao estoque</b>${avE.join('<br>')}
+    <button class="sec" data-aba="estoque" style="margin-top:10px">Ver estoque</button></div>`;
 
-  html += `<div class="card">
-    <h2>Anotar glicose</h2>
-    <input id="gl" class="grande" type="number" inputmode="numeric" placeholder="mg/dL" autocomplete="off">
-    <div class="chips">${momentos.map((m) => `<button class="chip ${momentoSel === m ? 'on' : ''}" data-momento="${m}">${m}</button>`).join('')}</div>
-    <button id="salvarGl">Salvar</button>
-    <p class="muted" style="margin-top:10px">👆 Lave e seque as mãos antes de furar. Fure a lateral da ponta do dedo (dói menos) e vá trocando de dedo.</p>
-    ${ult ? `<p class="muted" style="margin-top:12px">Última: <b class="t-${cor(ult.v)}">${ult.v}</b> — ${dia(ult.t)} às ${hora(ult.t)}${ult.m ? ' (' + esc(ult.m) + ')' : ''}</p>` : ''}
-  </div>`;
-
-  // Insulina
+  // Resumo do dia
   const ui = ultimaInsulina();
-  const sug = localSugerido();
-  html += `<div class="card">
-    <h2>💉 Anotar insulina</h2>
-    <input id="ins" class="grande" type="number" inputmode="decimal" step="0.5" placeholder="unidades" autocomplete="off">
-    <div class="chips">${['Rápida', 'Lenta'].map((t) => `<button class="chip ${insTipo === t ? 'on' : ''}" data-instipo="${t}">${t}</button>`).join('')}</div>
-    <p style="margin:12px 0 0;font-weight:600">Onde aplicou?</p>
-    <div class="chips">${LOCAIS.map((l) => `<button class="chip ${(insLocal || sug) === l ? 'on' : ''}" data-inslocal="${l}">${l}${l === sug ? ' ⭐' : ''}</button>`).join('')}</div>
-    <p class="muted" style="margin-top:8px">⭐ Sugestão do rodízio: <b>${sug}</b>${ui ? ` (a última foi ${esc(ui.local).toLowerCase()})` : ''}. Trocar de lugar evita caroços na pele.</p>
-    <button id="salvarIns">Salvar</button>
-    ${ui ? `<p class="muted" style="margin-top:12px">Última: <b>${ui.u} un</b> ${esc(ui.tipo).toLowerCase()} — ${esc(ui.local).toLowerCase()}, ${dia(ui.t)} às ${hora(ui.t)}</p>` : ''}
+  html += `<div class="card"><h2>Hoje</h2>
+    <div class="resumo-linha" data-aba="glicose"><span style="font-size:1.6rem">🩸</span><div class="info">Última glicose<br>
+      ${ult ? `<b class="t-${cor(ult.v)}" style="font-size:1.3rem">${ult.v}</b> <span class="muted">${dia(ult.t).toLowerCase()} às ${hora(ult.t)}</span>` : '<span class="muted">nenhuma ainda</span>'}</div><b>›</b></div>
+    <div class="resumo-linha" data-aba="insulina"><span style="font-size:1.6rem">💉</span><div class="info">Última insulina<br>
+      ${ui ? `<b style="font-size:1.3rem">${ui.u} un</b> <span class="muted">${esc(ui.tipo).toLowerCase()} · ${dia(ui.t).toLowerCase()} às ${hora(ui.t)}</span>` : '<span class="muted">nenhuma ainda</span>'}</div><b>›</b></div>
+  </div>
+  <div class="atalhos">
+    <button data-aba="glicose"><span>🩸</span>Anotar glicose</button>
+    <button data-aba="insulina"><span>💉</span>Anotar insulina</button>
+    <button data-aba="exercicio"><span>💪</span>Exercício</button>
+    <button data-aba="relatorio"><span>📄</span>Relatório</button>
   </div>`;
 
   // Corrida do dia
@@ -366,8 +523,58 @@ function telaInicio(){
   }
 
   html += `<button class="sos" data-sobre="hipo">⚠️ Estou com a glicose baixa</button>
-    <button class="sec" data-sobre="ficha">🆘 Ficha de emergência</button>`;
+    <button class="sec" data-aba="emergencia">🆘 Ficha de emergência</button>`;
   return html;
+}
+
+function telaGlicose(){
+  const c = D.cfg;
+  const ult = D.glicemias[D.glicemias.length - 1];
+  const momentos = ['Jejum','Antes de comer','2h depois de comer','Antes de dormir','Outro'];
+  let html = '';
+  html += `<div class="card">
+    <h2>Anotar glicose</h2>
+    <input id="gl" class="grande" type="number" inputmode="numeric" placeholder="mg/dL" autocomplete="off">
+    <div class="chips">${momentos.map((m) => `<button class="chip ${momentoSel === m ? 'on' : ''}" data-momento="${m}">${m}</button>`).join('')}</div>
+    <p style="margin:12px 0 0;font-weight:600">Aconteceu algo? <span class="muted" style="font-weight:400">(opcional)</span></p>
+    <div class="chips">${TAGS.map((t) => `<button class="chip ${tagsSel.includes(t) ? 'on' : ''}" data-tag="${t}">${t}</button>`).join('')}</div>
+    <button id="salvarGl">Salvar</button>
+    <p class="muted" style="margin-top:10px">👆 Lave e seque as mãos antes de furar. Fure a lateral da ponta do dedo (dói menos) e vá trocando de dedo.</p>
+    ${ult ? `<p class="muted" style="margin-top:12px">Última: <b class="t-${cor(ult.v)}">${ult.v}</b> — ${dia(ult.t)} às ${hora(ult.t)}${ult.m ? ' (' + esc(ult.m) + ')' : ''}</p>` : ''}
+  </div>`;
+
+  return html + hojeLista('glicose');
+}
+
+function telaInsulina(){
+  let html = '';
+  const ui = ultimaInsulina();
+  const sug = localSugerido();
+  html += `<div class="card">
+    <h2>💉 Anotar insulina</h2>
+    <input id="ins" class="grande" type="number" inputmode="decimal" step="0.5" placeholder="unidades" autocomplete="off">
+    <div class="chips">${['Rápida', 'Lenta'].map((t) => `<button class="chip ${insTipo === t ? 'on' : ''}" data-instipo="${t}">${t}</button>`).join('')}</div>
+    <p style="margin:12px 0 0;font-weight:600">Onde aplicou?</p>
+    <div class="chips">${LOCAIS.map((l) => `<button class="chip ${(insLocal || sug) === l ? 'on' : ''}" data-inslocal="${l}">${l}${l === sug ? ' ⭐' : ''}</button>`).join('')}</div>
+    <p class="muted" style="margin-top:8px">⭐ Sugestão do rodízio: <b>${sug}</b>${ui ? ` (a última foi ${esc(ui.local).toLowerCase()})` : ''}. Trocar de lugar evita caroços na pele.</p>
+    <button id="salvarIns">Salvar</button>
+    ${ui ? `<p class="muted" style="margin-top:12px">Última: <b>${ui.u} un</b> ${esc(ui.tipo).toLowerCase()} — ${esc(ui.local).toLowerCase()}, ${dia(ui.t)} às ${hora(ui.t)}</p>` : ''}
+  </div>`;
+  return html + hojeLista('insulina');
+}
+
+// Lista do que foi anotado hoje (embaixo das telas de glicose e insulina)
+function hojeLista(tipo){
+  if(tipo === 'glicose'){
+    const l = D.glicemias.map((g, idx) => ({ g, idx })).filter(({ g }) => hojeStr(g.t) === hojeStr()).reverse();
+    return `<div class="card"><h2>Medidas de hoje</h2>${l.length ? `<ul class="lista">${l.map(({ g, idx }) => `<li>
+      <span class="num t-${cor(g.v)}">${g.v}</span><div class="info">${hora(g.t)}<br><span class="muted">${esc([g.m, ...(g.tags || [])].filter(Boolean).join(' · '))}</span></div>
+      <button class="mini" data-apagar="${idx}">apagar</button></li>`).join('')}</ul>` : '<p class="muted">Nenhuma medida hoje ainda.</p>'}</div>`;
+  }
+  const l = D.insulinas.map((x, idx) => ({ x, idx })).filter(({ x }) => hojeStr(x.t) === hojeStr()).reverse();
+  return `<div class="card"><h2>Aplicações de hoje</h2>${l.length ? `<ul class="lista">${l.map(({ x, idx }) => `<li>
+    <span class="num">${x.u}<small style="font-size:.8rem"> un</small></span><div class="info">${hora(x.t)}<br><span class="muted">${esc(x.tipo)} · ${esc(x.local)}</span></div>
+    <button class="mini" data-apagarins="${idx}">apagar</button></li>`).join('')}</ul>` : '<p class="muted">Nenhuma aplicação hoje ainda.</p>'}</div>`;
 }
 
 function telaCorrida(){
@@ -497,20 +704,38 @@ function telaCorrida(){
 function telaHistorico(){
   const c = D.cfg;
   const comAmbos = D.corridas.filter((r) => r.antes && r.depois);
-  const media = comAmbos.length ? Math.round(comAmbos.reduce((s, r) => s + (r.antes - r.depois), 0) / comAmbos.length) : null;
-  const ult30 = D.glicemias.filter((g) => g.t > agora() - 30 * 864e5);
-  const na = ult30.filter((g) => g.v >= c.hipo && g.v <= c.alto).length;
+  const st = estat(30);
 
-  let html = `<h1>Histórico</h1><div class="card"><h2>Resumo</h2>`;
+  let html = '';
+  if(st.n){
+    html += `<div class="card"><h2>Últimos 30 dias</h2>
+      <div class="kpis">
+        <div class="kpi"><small>Tempo na meta (${c.hipo}–${c.metaMax})</small><b class="t-verde">${st.meta}%</b></div>
+        <div class="kpi"><small>Média</small><b>${st.media}</b> <small style="display:inline">mg/dL</small></div>
+        <div class="kpi"><small>Glicada estimada</small><b>${st.a1c !== null ? String(st.a1c).replace('.', ',') + '%' : '—'}</b></div>
+        <div class="kpi"><small>Glicoses baixas</small><b class="${st.hipos ? 't-vermelho' : ''}">${st.hipos}</b></div>
+      </div>
+      ${barraMeta(st)}
+      <p class="muted" style="margin-top:10px">${st.a1c !== null
+        ? 'A glicada estimada é calculada pelas medidas do dedo. Não substitui o exame de sangue, mas mostra se está indo no caminho certo.'
+        : 'A glicada estimada aparece quando tiver pelo menos 20 medidas em 7 dias diferentes.'} A meta do dia a dia (70–180) é a mais usada; confirme com o médico.</p>
+    </div>`;
+    const pd = padroes();
+    if(pd.length) html += `<div class="card"><h2>🔎 O que o app percebeu</h2>${pd.map((x) => `<div class="aviso ${x.cor}" style="margin-top:8px">${x.txt}</div>`).join('')}
+      <p class="muted" style="margin-top:10px">Vale mostrar isso ao médico.</p></div>`;
+  }
+  html += `<div class="card"><h2>🏅 Conquistas</h2><div class="medalhas">${medalhas().map(([i, t, ok]) => `<div class="medalha ${ok ? 'sim' : 'nao'}"><span>${i}</span>${t}</div>`).join('')}</div>
+    <p class="muted" style="margin-top:10px">Maior sequência: <b>${maiorSequencia()} dias</b> seguidos anotando.</p></div>`;
+
+  html += `<div class="card"><h2>Exercício e glicose</h2>`;
   Object.keys(EX).forEach((k) => {
     const l = comAmbos.filter((r) => (r.ex || 'Corrida') === k);
     if(!l.length) return;
     const m = Math.round(l.reduce((s, r) => s + (r.antes - r.depois), 0) / l.length);
     html += `<p>${EX[k].icone} <b>${k}:</b> em média a glicose <b>${m >= 0 ? 'cai' : 'sobe'} ${Math.abs(m)} mg/dL</b> (${l.length} vez${l.length > 1 ? 'es' : ''}).</p>`;
   });
-  if(ult30.length) html += `<p>Últimos 30 dias: <b>${Math.round(na / ult30.length * 100)}%</b> das medidas entre ${c.hipo} e ${c.alto}. Média <b>${Math.round(ult30.reduce((s, g) => s + g.v, 0) / ult30.length)}</b>.</p>`;
-  if(!ult30.length && media === null) html += `<p class="muted">Ainda não tem registros. Eles vão aparecendo aqui.</p>`;
-  html += `<button class="sec" id="relatorio">Enviar resumo pro médico</button></div>`;
+  if(!comAmbos.length) html += `<p class="muted">Ainda não tem exercícios com a glicose de antes e de depois.</p>`;
+  html += `<button data-aba="relatorio">📄 Relatório pro médico (PDF)</button></div>`;
 
   if(D.corridas.length){
     html += `<div class="card"><h2>Exercícios</h2><ul class="lista">` +
@@ -530,7 +755,7 @@ function telaHistorico(){
     html += `<div class="card"><h2>Medidas</h2><ul class="lista">` +
       D.glicemias.slice(-60).map((g, i, arr) => ({ g, idx: D.glicemias.length - arr.length + i })).reverse().map(({ g, idx }) => `<li>
         <span class="num t-${cor(g.v)}">${g.v}</span>
-        <div class="info">${dia(g.t)} às ${hora(g.t)}<br><span class="muted">${esc(g.m || '')}</span></div>
+        <div class="info">${dia(g.t)} às ${hora(g.t)}<br><span class="muted">${esc([g.m, ...(g.tags || [])].filter(Boolean).join(' · '))}</span></div>
         <button class="mini" data-apagar="${idx}">apagar</button></li>`).join('') + `</ul></div>`;
   }
   html += `<div class="card"><h2>Cópia de segurança</h2>
@@ -540,6 +765,47 @@ function telaHistorico(){
   return html;
 }
 
+function telaEstoque(){
+  const e = D.estoque, c = D.cfg;
+  const fdia = usoPorDia(D.glicemias), adia = usoPorDia(D.insulinas);
+  const dura = (q, pd) => pd > 0 ? `dura ~${Math.floor(q / pd)} dias` : 'desconta sozinho';
+  const linha = (k, icone, nome, sub) => `<div class="estoque-linha"><span style="font-size:1.6rem">${icone}</span>
+    <div class="info"><b>${nome}</b><br><span class="muted">${sub}</span></div>
+    <input type="number" inputmode="numeric" data-estoque="${k}" value="${e[k]}"></div>`;
+  const caneta = (tp) => {
+    const cn = D.canetas[tp], fech = tp === 'Rápida' ? e.canetaRapida : e.canetaLenta;
+    let corpo;
+    if(cn){
+      const vence = Math.ceil((cn.aberta + c.validadeCaneta * DIA - agora()) / DIA);
+      const pc = Math.max(0, Math.min(100, cn.restante / c.unidadesCaneta * 100));
+      corpo = `<p>Aberta ${dia(cn.aberta).toLowerCase()} · ${vence > 0 ? `vence em <b class="${vence <= 3 ? 't-vermelho' : ''}">${vence} dia${vence === 1 ? '' : 's'}</b>` : '<b class="t-vermelho">vencida</b>'}</p>
+        <p>Restam <b>~${Math.max(0, Math.round(cn.restante))} unidades</b></p>
+        <div class="barra" title="${Math.round(pc)}% da caneta"><span style="width:${pc}%;background:var(--brand)"></span><span style="flex:1;background:var(--line)"></span></div>`;
+    }else corpo = `<p class="muted">Nenhuma caneta aberta registrada.</p>`;
+    return `<div class="card"><h2>💉 Caneta ${tp.toLowerCase()} em uso</h2>${corpo}
+      <button class="sec" data-abrircaneta="${tp}">Abri uma caneta nova${fech ? ` (tem ${fech} guardada${fech > 1 ? 's' : ''})` : ''}</button></div>`;
+  };
+  const av = avisosEstoque();
+  return `
+    ${av.length ? `<div class="aviso laranja" style="margin:0 0 14px"><b class="big">📦 Atenção</b>${av.join('<br>')}</div>` : ''}
+    ${caneta('Rápida')}${caneta('Lenta')}
+    <div class="card"><h2>O que tem guardado</h2>
+      <p class="muted">Digite quanto tem. Fitas e agulhas <b>descontam sozinhas</b> a cada medida e aplicação.</p>
+      ${linha('fitas', '🩸', 'Fitas de glicose', dura(e.fitas, fdia))}
+      ${linha('agulhas', '📍', 'Agulhas da caneta', dura(e.agulhas, adia))}
+      ${linha('lancetas', '👆', 'Lancetas', 'troque com frequência')}
+      ${linha('canetaRapida', '💉', 'Canetas rápidas fechadas', 'guardadas na geladeira')}
+      ${linha('canetaLenta', '💉', 'Canetas lentas fechadas', 'guardadas na geladeira')}
+    </div>
+    <div class="card"><h2>Ajustes das canetas</h2>
+      <label for="c_validadeCaneta">Depois de aberta, vale quantos dias?</label>
+      <input id="c_validadeCaneta" data-cfg="validadeCaneta" type="number" inputmode="numeric" value="${c.validadeCaneta}">
+      <label for="c_unidadesCaneta">Quantas unidades tem uma caneta?</label>
+      <input id="c_unidadesCaneta" data-cfg="unidadesCaneta" type="number" inputmode="numeric" value="${c.unidadesCaneta}">
+      <p class="muted" style="margin-top:8px">Confira na bula da insulina dele. A maioria das canetas tem 300 unidades.</p>
+    </div>`;
+}
+
 function telaAjustes(){
   const c = D.cfg;
   const campo = (k, rot, tipo = 'text', extra = '') =>
@@ -547,7 +813,7 @@ function telaAjustes(){
   const area = (k, rot) => `<label for="c_${k}">${rot}</label><textarea id="c_${k}" data-cfg="${k}" rows="2">${esc(c[k])}</textarea>`;
   const permNotif = 'Notification' in window ? Notification.permission : 'indisponivel';
 
-  return `<h1>Ajustes</h1>
+  return `
   <div class="card"><h2>Você</h2>
     ${campo('nome', 'Seu nome')}
     <label class="check"><input type="checkbox" data-cfg="insulina" ${c.insulina ? 'checked' : ''}> Uso insulina</label>
@@ -568,6 +834,7 @@ function telaAjustes(){
 
   <div class="card"><h2>Faixas de glicose (mg/dL)</h2>
     <div class="aviso amarelo">⚠️ Estes números são padrões gerais. <b>Confirme com o médico</b> e ajuste aqui.</div>
+    ${campo('metaMax', 'Meta do dia a dia: até', 'number', 'inputmode="numeric"')}
     <div class="linha"><div>${campo('hipo', 'Baixa (hipo) abaixo de', 'number', 'inputmode="numeric"')}</div>
       <div>${campo('baixo', 'Comer antes do exercício abaixo de', 'number', 'inputmode="numeric"')}</div></div>
     <div class="linha"><div>${campo('alto', 'Alta acima de', 'number', 'inputmode="numeric"')}</div>
@@ -581,18 +848,18 @@ function telaAjustes(){
     ${area('alergias', 'Alergias')}
     ${campo('medico', 'Médico e telefone')}
     ${area('obs', 'Outras informações')}
-    <button class="sec" data-sobre="ficha">Ver ficha</button>
+    <button class="sec" data-aba="emergencia">Ver ficha</button>
   </div>
 
   <p class="muted">Este app ajuda a registrar, lembrar e avisar. Ele não substitui o médico — as decisões sobre remédios e doses são sempre com ele.</p>`;
 }
 
 /* ---------- sobreposições ---------- */
-function telaFicha(){
+function telaFicha(comoTela){
   const c = D.cfg;
   const l = (r, v) => v ? `<p><b>${r}:</b> ${esc(v)}</p>` : '';
   const ult = D.glicemias[D.glicemias.length - 1];
-  return `<main>
+  return `<main style="${comoTela ? 'padding:0' : ''}">
     <div class="aviso vermelho"><b class="big">🆘 ${c.nome ? esc(c.nome) + ' — ' : ''}TENHO DIABETES</b>
       Se eu estiver confuso, suando frio ou desmaiado, posso estar com <b>glicose baixa</b>.
       Se eu conseguir engolir, me dê <b>açúcar, mel ou suco</b>. Se não, chame o <b>SAMU (192)</b>.</div>
@@ -603,8 +870,56 @@ function telaFicha(){
     </div>
     <a class="btn sos" href="tel:192" style="background:var(--bad);color:#fff">📞 Ligar para o SAMU (192)</a>
     ${c.contatoTel ? `<a class="btn sec" href="tel:${esc(c.contatoTel.replace(/[^\d+]/g, ''))}">📞 Ligar para ${esc(c.contatoNome || 'o contato')}</a>` : ''}
-    <button class="sec" data-fechar>Fechar</button>
+    ${comoTela ? '<button class="sos" data-sobre="hipo">⚠️ Estou com a glicose baixa</button>' : '<button class="sec" data-fechar>Fechar</button>'}
   </main>`;
+}
+function barraMeta(st){
+  const c = D.cfg;
+  const partes = [['Baixa', st.baixa, 'var(--bad)', `< ${c.hipo}`], ['Na meta', st.meta, 'var(--ok)', `${c.hipo}–${c.metaMax}`],
+    ['Acima', st.acima, 'var(--warn)', `${c.metaMax + 1}–${c.alto}`], ['Alta', st.alta, 'var(--alto)', `> ${c.alto}`]];
+  return `<div class="barra" role="img" aria-label="${partes.map(([n, v]) => `${n} ${v}%`).join(', ')}">${partes.filter(([, v]) => v > 0)
+      .map(([n, v, cr, f]) => `<span style="flex:${v};background:${cr}" title="${n} (${f}): ${v}%"></span>`).join('')}</div>
+    <div class="legenda">${partes.map(([n, v, cr, f]) => `<span><i style="background:${cr}"></i>${n} (${f}): <b>${v}%</b></span>`).join('')}</div>`;
+}
+function telaRelatorio(){
+  const c = D.cfg, st = estat(30);
+  const ini = new Date(agora() - 30 * DIA).toLocaleDateString('pt-BR'), fim = new Date().toLocaleDateString('pt-BR');
+  const periodos = PERIODOS.map(([nome, a, b]) => {
+    const l = st.g.filter((x) => { const h = new Date(x.t).getHours(); return h >= a && h < b; }).map((x) => x.v);
+    return `<tr><td>${nome[0].toUpperCase() + nome.slice(1)} (${a}h–${b}h)</td><td>${l.length}</td><td>${media(l) ?? '—'}</td><td>${l.length ? Math.min(...l) : '—'}</td><td>${l.length ? Math.max(...l) : '—'}</td></tr>`;
+  }).join('');
+  const ins = D.insulinas.filter((x) => x.t > agora() - 30 * DIA);
+  const diasIns = new Set(ins.map((x) => hojeStr(x.t))).size || 1;
+  const insTxt = ['Rápida', 'Lenta'].map((tp) => { const l = ins.filter((x) => x.tipo === tp);
+    return l.length ? `<p>Insulina ${tp.toLowerCase()}: média <b>${String(Math.round(l.reduce((a, x) => a + x.u, 0) / diasIns * 10) / 10).replace('.', ',')} un/dia</b> (${l.length} aplicações)</p>` : ''; }).join('');
+  const exs = D.corridas.filter((x) => x.inicio > agora() - 30 * DIA);
+  const exTxt = Object.keys(EX).map((k) => { const l = exs.filter((x) => (x.ex || 'Corrida') === k), ab = l.filter((x) => x.antes && x.depois);
+    return l.length ? `<p>${k}: <b>${l.length}x</b>${ab.length ? ` · glicose cai em média <b>${media(ab.map((x) => x.antes - x.depois))} mg/dL</b>` : ''}</p>` : ''; }).join('');
+  const pd = padroes();
+  return `<div>
+    <button id="imprimir" class="noprint">📄 Salvar PDF</button>
+    <h1 style="margin-top:16px">Relatório de glicose</h1>
+    <p><b>${esc(c.nome)}</b>${c.tipo ? ' · ' + esc(c.tipo) : ''} · ${ini} a ${fim}</p>
+    ${!st.n ? '<p class="muted">Ainda não tem medidas nos últimos 30 dias.</p>' : `
+    <div class="card"><div class="kpis">
+      <div class="kpi"><small>Tempo na meta</small><b>${st.meta}%</b></div>
+      <div class="kpi"><small>Média (mg/dL)</small><b>${st.media}</b></div>
+      <div class="kpi"><small>Glicada estimada</small><b>${st.a1c !== null ? String(st.a1c).replace('.', ',') + '%' : '—'}</b></div>
+      <div class="kpi"><small>Baixas (&lt; ${c.hipo})</small><b>${st.hipos}</b></div>
+    </div>${barraMeta(st)}
+    <p class="muted" style="margin-top:8px">${st.n} medidas de ponta de dedo em ${st.diasCom} dias. Glicada estimada pela média (fórmula ADAG); não substitui o exame de laboratório.</p></div>
+    <div class="card"><h2>Por horário</h2><table class="rel"><tr><th>Período</th><th>Medidas</th><th>Média</th><th>Menor</th><th>Maior</th></tr>${periodos}</table></div>
+    ${pd.length ? `<div class="card"><h2>Padrões observados (14 dias)</h2>${pd.map((x) => `<p>• ${x.txt}</p>`).join('')}</div>` : ''}`}
+    ${insTxt || exTxt ? `<div class="card"><h2>Insulina e exercício</h2>${insTxt}${exTxt}</div>` : ''}
+    ${st.n ? `<div class="card"><h2>Todas as medidas</h2><table class="rel"><tr><th>Data</th><th>Hora</th><th>mg/dL</th><th>Momento</th></tr>
+      ${st.g.slice().reverse().map((x) => `<tr><td>${new Date(x.t).toLocaleDateString('pt-BR')}</td><td>${hora(x.t)}</td><td><b>${x.v}</b></td><td>${esc([x.m, ...(x.tags || [])].filter(Boolean).join(' · '))}</td></tr>`).join('')}</table></div>` : ''}
+    ${ins.length ? `<div class="card"><h2>Aplicações de insulina</h2><table class="rel"><tr><th>Data</th><th>Hora</th><th>Unid.</th><th>Tipo · local</th></tr>
+      ${ins.slice().reverse().map((x) => `<tr><td>${new Date(x.t).toLocaleDateString('pt-BR')}</td><td>${hora(x.t)}</td><td>${x.u}</td><td>${esc(x.tipo)} · ${esc(x.local)}</td></tr>`).join('')}</table></div>` : ''}
+    <div class="noprint">
+      <p class="muted">No iPhone: toque em “Salvar PDF”, depois no botão de compartilhar (quadrado com a seta) e escolha “Salvar em Arquivos” ou envie direto pelo WhatsApp.</p>
+      <button class="sec" id="relatorio">Enviar em texto pelo WhatsApp</button>
+    </div>
+  </div>`;
 }
 function telaHipo(){
   return `<main>
@@ -627,32 +942,59 @@ function telaHipo(){
 /* =========================================================
    RENDER E EVENTOS
    ========================================================= */
+const TELAS = [
+  ['inicio', '🏠', 'Início', () => telaInicio()],
+  ['glicose', '🩸', 'Glicose', () => telaGlicose()],
+  ['insulina', '💉', 'Insulina', () => telaInsulina()],
+  ['exercicio', '💪', 'Exercício', () => telaCorrida()],
+  ['historico', '📊', 'Histórico', () => telaHistorico()],
+  ['relatorio', '📄', 'Relatório', () => telaRelatorio()],
+  ['estoque', '📦', 'Estoque', () => telaEstoque()],
+  ['emergencia', '🆘', 'Emergência', () => telaFicha(true)],
+  ['ajustes', '⚙️', 'Ajustes', () => telaAjustes()]
+];
+let menuAberto = false;
 function render(){
-  const telas = { inicio: telaInicio, exercicio: telaCorrida, historico: telaHistorico, ajustes: telaAjustes };
-  $('#app').innerHTML = telas[aba]();
-  const abas = [['inicio','🏠','Início'], ['exercicio','💪','Exercício'], ['historico','📊','Histórico'], ['ajustes','⚙️','Ajustes']];
-  $('#nav').innerHTML = abas.map(([k, i, t]) => `<button class="${aba === k ? 'on' : ''}" data-aba="${k}"><span>${i}</span>${t}</button>`).join('');
-  $('#sobre').innerHTML = sobre ? `<div class="sobre">${sobre === 'ficha' ? telaFicha() : telaHipo()}</div>` : '';
+  const t = TELAS.find(([k]) => k === aba) || TELAS[0];
+  $('#app').innerHTML = t[3]();
+  $('#titulo').textContent = t[1] + ' ' + t[2];
+  $('#lateral').innerHTML = `<div class="marca"><img src="icon-192.png" alt="">Minha Glicose</div>` +
+    TELAS.map(([k, i, n], idx) => (idx === 4 || idx === 7 ? '<hr>' : '') + `<button class="${aba === k ? 'on' : ''}" data-aba="${k}"><span>${i}</span>${n}</button>`).join('') +
+    `<button class="sos" data-sobre="hipo"><span>⚠️</span>Glicose baixa</button>`;
+  $('#lateral').classList.toggle('aberta', menuAberto);
+  $('#veu').classList.toggle('on', menuAberto);
+  const sob = { ficha: () => telaFicha(false), hipo: telaHipo };
+  $('#sobre').innerHTML = sobre ? `<div class="sobre">${sob[sobre]()}</div>` : '';
 }
 
 document.addEventListener('click', (e) => {
+  if(e.target.id === 'veu'){ menuAberto = false; render(); return; }
   const el = e.target.closest('button, [data-aba], [data-sobre]');
   if(!el) return;
   const d = el.dataset;
 
-  if(d.aba){ aba = d.aba; render(); scrollTo(0, 0); return; }
+  if(el.id === 'menuBtn'){ menuAberto = !menuAberto; render(); return; }
+  if(d.aba){ aba = d.aba; menuAberto = false; render(); scrollTo(0, 0); return; }
   if(d.ex){ D.run = { ex: d.ex, etapa: 'antes', checks: {} }; salvar(); render(); scrollTo(0, 0); return; }
   if(d.sobre){
     if(d.sobre === 'hipo' && hipoAte && hipoAte < agora()) hipoAte = null;
-    sobre = d.sobre; render(); return;
+    sobre = d.sobre; menuAberto = false; render(); document.querySelector('.sobre')?.scrollTo(0, 0); return;
   }
   if('fechar' in d){ sobre = null; render(); return; }
-  if(d.momento || d.instipo || d.inslocal){
+  if(d.momento || d.instipo || d.inslocal || d.tag){
     if(d.momento) momentoSel = momentoSel === d.momento ? null : d.momento;
+    if(d.tag) tagsSel = tagsSel.includes(d.tag) ? tagsSel.filter((x) => x !== d.tag) : [...tagsSel, d.tag];
     if(d.instipo) insTipo = d.instipo;
     if(d.inslocal) insLocal = d.inslocal;
-    const g = $('#gl').value, n = $('#ins').value;
-    render(); $('#gl').value = g; $('#ins').value = n; return;
+    const g = $('#gl')?.value, n = $('#ins')?.value;
+    render(); if($('#gl')) $('#gl').value = g; if($('#ins')) $('#ins').value = n; return;
+  }
+  if(d.abrircaneta){
+    const tp = d.abrircaneta, k = tp === 'Rápida' ? 'canetaRapida' : 'canetaLenta';
+    if(!confirm(`Registrar que abriu uma caneta ${tp.toLowerCase()} nova hoje?`)) return;
+    D.canetas[tp] = { aberta: agora(), restante: D.cfg.unidadesCaneta };
+    if(D.estoque[k] > 0) D.estoque[k]--;
+    salvar(); render(); toast('Caneta nova registrada ✓'); return;
   }
   if(d.apagarins !== undefined){
     if(confirm('Apagar esta aplicação?')){ D.insulinas.splice(+d.apagarins, 1); salvar(); render(); }
@@ -666,8 +1008,8 @@ document.addEventListener('click', (e) => {
   switch(el.id){
     case 'salvarGl': {
       const v = numero('#gl'); if(!v) return;
-      registrar(v, momentoSel || '');
-      momentoSel = null;
+      registrar(v, momentoSel || '', tagsSel);
+      momentoSel = null; tagsSel = [];
       const ver = vereditoGeral(v);
       if(v < D.cfg.hipo){ sobre = 'hipo'; render(); return; }
       render();
@@ -680,6 +1022,8 @@ document.addEventListener('click', (e) => {
       if(!insTipo){ toast('Toque em Rápida ou Lenta.'); return; }
       const local = insLocal || localSugerido();
       D.insulinas.push({ t: agora(), u, tipo: insTipo, local });
+      if(D.estoque.agulhas > 0) D.estoque.agulhas--;
+      if(D.canetas[insTipo]) D.canetas[insTipo].restante -= u + 2;   // +2 un do teste de fluxo (“purga”)
       salvar(); insTipo = null; insLocal = null; render();
       toast(`Anotado: ${u} un ${local.toLowerCase()} ✓`);
       return;
@@ -718,6 +1062,7 @@ document.addEventListener('click', (e) => {
     case 'ics': baixarIcs(); return;
     case 'notif': Notification.requestPermission().then(render); return;
     case 'relatorio': compartilharResumo(); return;
+    case 'imprimir': window.print(); return;
     case 'exportar': exportar(); return;
   }
 });
@@ -738,6 +1083,11 @@ document.addEventListener('change', (e) => {
     if(k === 'horaCorrida' || k === 'horaDormir') toast('Salvo ✓ — coloque os lembretes na agenda de novo');
     if(el.type === 'checkbox' || el.type === 'time') render();
     return;
+  }
+  if(el.dataset.estoque){
+    const v = parseInt(el.value, 10);
+    if(!(v >= 0)){ el.value = D.estoque[el.dataset.estoque]; return; }
+    D.estoque[el.dataset.estoque] = v; salvar(); toast('Salvo ✓'); render(); return;
   }
   if(el.id === 'km' && D.run){ D.run.km = el.value; salvar(); return; }
   if(el.id === 'importar' && el.files[0]) importar(el.files[0]);
@@ -784,7 +1134,7 @@ function importar(arq){
     const x = JSON.parse(s);
     if(!x || !Array.isArray(x.glicemias)) throw 0;
     if(!confirm('Isso substitui os dados atuais pelos da cópia. Continuar?')) return;
-    D = { ...PADRAO, ...x, insulinas: x.insulinas || [], cfg: { ...PADRAO.cfg, ...x.cfg } }; salvar(); render(); toast('Cópia restaurada ✓');
+    D = normalizar(x); salvar(); render(); toast('Cópia restaurada ✓');
   }).catch(() => toast('Arquivo inválido.'));
 }
 
