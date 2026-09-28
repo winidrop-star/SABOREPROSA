@@ -89,7 +89,7 @@ create policy "movimentos escrita publica" on caixa_movimentos for insert with c
 -- ou na área de admin do site.
 -- ---------------------------------------------------------------
 insert into config (chave, valor) values
-('loja', '{"modo": "auto", "horarioAbre": "18:00", "horarioFecha": "23:30", "whatsapp": ""}'),
+('loja', '{"modo": "auto", "horarioAbre": "18:00", "horarioFecha": "23:30", "whatsapp": "5565996599587"}'),
 ('adicionais', '[
  {
   "nome": "Hambúrguer extra",

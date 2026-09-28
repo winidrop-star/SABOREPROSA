@@ -18,9 +18,9 @@ isso que entra pra fila da cozinha em tempo real.
 
 ## O que configurar antes de abrir
 
-- **WhatsApp da loja**: em `supabase/schema.sql`, na linha `('loja', ...)`,
-  preencha `"whatsapp"` com o número só com dígitos (ex: `5565999999999`)
-  antes de rodar — ou depois, direto na tabela `config` do Supabase.
+- **WhatsApp da loja**: já vem configurado com (65) 99659-9587 em
+  `supabase/schema.sql`. Se mudar, altere o `"whatsapp"` da chave `loja` na
+  tabela `config` do Supabase (só dígitos, com 55 na frente).
 - **Adicionais e preços**: vêm com uma lista de exemplo; ajuste no painel
   (modo Caixa → "Loja & cardápio") ou na área de admin do site.
 - **Horário**: padrão 18:00 às 23:30; muda no painel. Fechamento depois da
