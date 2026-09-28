@@ -44,6 +44,8 @@
     background:var(--brand); color:var(--brand-ink); cursor:pointer; padding:12px 16px; text-align:center; text-decoration:none; margin-top:10px;
   }
   button.sec,.btn.sec{ background:transparent; color:var(--brand); border:2px solid var(--brand); }
+  button.escolha{ min-height:120px; font-size:1.5rem; margin-top:14px; }
+  button.escolha span{ display:block; font-size:2.6rem; line-height:1.2; }
   button.sos{ background:var(--bad); color:#fff; font-size:1.15rem; }
   button:disabled{ opacity:.45; cursor:not-allowed; }
   button.mini{ display:inline-block; width:auto; min-height:0; padding:4px 10px; margin:0; font-size:.85rem; background:transparent; color:var(--muted); border:1px solid var(--line); }
@@ -104,7 +106,7 @@
 const CHAVE = 'minha-glicose-v1';
 const PADRAO = {
   cfg: {
-    nome: '',
+    nome: 'Sr. Walmison',
     horaCorrida: '06:00',
     horaDormir: '22:00',
     insulina: true,
@@ -126,6 +128,20 @@ let aba = 'inicio';
 let momentoSel = null;
 let insTipo = null, insLocal = null;
 const LOCAIS = ['Barriga', 'Braço', 'Coxa', 'Nádega'];
+// Tipos de exercício e os textos de cada um
+const EX = {
+  Corrida: { icone: '🏃', verbo: 'correr', neg: 'corra', fazendo: 'Correndo', fez: 'correu', salvo: 'Corrida salva',
+    antes: 'Antes da corrida', depois: 'Depois da corrida', durante: 'durante a corrida', km: true,
+    dica: 'Correr costuma fazer a glicose cair durante e nas horas seguintes.',
+    itens: [['tenis', 'Tênis confortável e meia sem costura']],
+    insulina: 'Não apliquei insulina nas pernas antes de correr' },
+  Academia: { icone: '🏋️', verbo: 'treinar', neg: 'treine', fazendo: 'Treinando', fez: 'treinou', salvo: 'Treino salvo',
+    antes: 'Antes da academia', depois: 'Depois da academia', durante: 'durante o treino na academia', km: false,
+    dica: 'Musculação às vezes faz a glicose subir durante o treino e cair horas depois — por isso meça antes de dormir.',
+    itens: [['tenis', 'Tênis fechado e meia sem costura'], ['professor', 'O professor da academia sabe que tenho diabetes']],
+    insulina: 'Não apliquei insulina no músculo que vou treinar hoje' }
+};
+const exDe = (r) => EX[r?.ex] || EX.Corrida;
 let sobre = null;          // 'ficha' | 'hipo'
 let hipoAte = null;
 
@@ -184,19 +200,19 @@ function cor(v){
 }
 
 // Avaliação para ANTES DA CORRIDA
-function vereditoCorrida(v){
+function vereditoCorrida(v, e){
   const c = D.cfg;
-  if(v < c.hipo) return { cor:'vermelho', tipo:'hipo', titulo:'Glicose baixa — não corra agora',
+  if(v < c.hipo) return { cor:'vermelho', tipo:'hipo', titulo:`Glicose baixa — não ${e.neg} agora`,
     texto:`Coma <b>15g de açúcar rápido</b> agora (1 colher de sopa de mel ou açúcar, ou 1 copo pequeno de suco). Espere 15 minutos e meça de novo.` };
-  if(v < c.baixo) return { cor:'amarelo', tipo:'comer', titulo:'Coma algo antes de correr',
+  if(v < c.baixo) return { cor:'amarelo', tipo:'comer', titulo:`Coma algo antes de ${e.verbo}`,
     texto:`Coma <b>15 a 30g de carboidrato</b> (uma fruta, um pão ou uma torrada). Espere 15 minutos e meça de novo.` };
-  if(v <= c.alto) return { cor:'verde', tipo:'ok', titulo:'Pode correr! Bom treino 🏃',
+  if(v <= c.alto) return { cor:'verde', tipo:'ok', titulo:`Pode ${e.verbo}! Bom treino ${e.icone}`,
     texto:'Leve o açúcar rápido no bolso, por garantia.' };
   if(v <= c.muitoAlto) return { cor:'laranja', tipo:'alto', titulo:'Glicose alta',
     texto: c.insulina
       ? 'Como você usa insulina, <b>cheque as cetonas</b> antes. Se deram negativo, pode fazer um treino leve. Se deram positivo ou não tem como checar, faça só uma caminhada leve hoje e beba água.'
-      : 'Hoje prefira <b>uma caminhada leve</b> em vez de correr, e beba bastante água.' };
-  return { cor:'vermelho', tipo:'naocorrer', titulo:'Hoje não corra',
+      : 'Hoje prefira <b>uma caminhada leve</b> em vez do exercício, e beba bastante água.' };
+  return { cor:'vermelho', tipo:'naocorrer', titulo:`Hoje não ${e.neg}`,
     texto:'Glicose muito alta. Beba água e descanse. Meça de novo daqui a pouco — se não baixar, <b>fale com o médico</b>.' };
 }
 
@@ -268,10 +284,10 @@ function eventosLembrete(){
     return `${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`;
   };
   return [
-    { hora: menos(c.horaCorrida, 30), titulo: '🩸 Meça a glicose antes da corrida',
+    { hora: menos(c.horaCorrida, 30), titulo: '🩸 Meça a glicose antes do exercício',
       desc: 'Abra o app Minha Glicose e faça o checklist. Se estiver abaixo de ' + c.baixo + ', coma algo agora.' },
-    { hora: c.horaCorrida, titulo: '🏃 Hora da corrida!',
-      desc: 'Leve açúcar rápido, celular e água. Abra o app e toque em Corrida.' },
+    { hora: c.horaCorrida, titulo: '💪 Hora do exercício!',
+      desc: 'Leve açúcar rápido, celular e água. Abra o app e toque em Exercício.' },
     { hora: c.horaDormir, titulo: '🌙 Meça a glicose antes de dormir',
       desc: 'A glicose pode cair horas depois do exercício, até de madrugada. Se estiver baixa, coma um lanche.' }
   ];
@@ -337,16 +353,16 @@ function telaInicio(){
 
   // Corrida do dia
   if(D.run && D.run.etapa !== 'fim'){
-    html += `<div class="card"><h2>🏃 Corrida em andamento</h2><button data-aba="corrida">Voltar para a corrida</button></div>`;
+    html += `<div class="card"><h2>${exDe(D.run).icone} Exercício em andamento</h2><button data-aba="exercicio">Voltar para o exercício</button></div>`;
   }else if(corridaHoje){
-    html += `<div class="card"><h2>✅ Corrida de hoje feita</h2>
+    html += `<div class="card"><h2>✅ ${exDe(corridaHoje).icone} ${esc(corridaHoje.ex || 'Corrida')} de hoje feita</h2>
       <p>Glicose: <b>${corridaHoje.antes ?? '—'}</b> antes → <b>${corridaHoje.depois ?? '—'}</b> depois.</p>
       <div class="aviso amarelo"><b>🌙 Lembre de medir antes de dormir (${esc(c.horaDormir)}).</b>
       A glicose pode cair horas depois do exercício.</div></div>`;
   }else{
-    html += `<div class="card"><h2>🏃 Corrida de hoje — ${esc(c.horaCorrida)}</h2>
-      <p class="muted">Antes de sair, faça o checklist.</p>
-      <button data-aba="corrida">Vou correr agora</button></div>`;
+    html += `<div class="card"><h2>💪 Exercício de hoje — ${esc(c.horaCorrida)}</h2>
+      <p class="muted">Corrida ou academia: antes de sair, faça o checklist.</p>
+      <button data-aba="exercicio">Vou me exercitar agora</button></div>`;
   }
 
   html += `<button class="sos" data-sobre="hipo">⚠️ Estou com a glicose baixa</button>
@@ -355,17 +371,23 @@ function telaInicio(){
 }
 
 function telaCorrida(){
-  const r = D.run, c = D.cfg;
+  const r = D.run, c = D.cfg, e = exDe(r);
 
-  if(!r || r.etapa === 'antes'){
+  if(!r || !r.ex){
+    return `<h1>Qual exercício hoje?</h1>
+      ${Object.entries(EX).map(([k, x]) => `<button class="escolha" data-ex="${k}"><span>${x.icone}</span>${k}</button>`).join('')}
+      <p class="muted" style="margin-top:16px">Depois de escolher, o app confere a glicose e faz o checklist com você.</p>`;
+  }
+
+  if(r.etapa === 'antes'){
     const antes = r?.antes;
-    const ver = antes ? vereditoCorrida(antes) : null;
+    const ver = antes ? vereditoCorrida(antes, e) : null;
     const itens = [
       ['acucar', 'Levo açúcar rápido (sachê de mel, bala ou suquinho)'],
       ['celular', 'Levo o celular e água'],
       ['ficha', 'Levo identificação de diabético (ou a ficha do app)'],
-      ['tenis', 'Tênis confortável e meia sem costura'],
-      ...(c.insulina ? [['insulina', 'Não apliquei insulina nas pernas antes de correr']] : [])
+      ...e.itens,
+      ...(c.insulina ? [['insulina', e.insulina]] : [])
     ];
     const ch = r?.checks || {};
     const todos = itens.every(([k]) => ch[k]);
@@ -375,13 +397,14 @@ function telaCorrida(){
     const rap = ultimaInsulina('Rápida');
     const avisoIns = rap && minutosDesde(rap.t) < 120
       ? `<div class="aviso amarelo" style="margin:0 0 14px"><b class="big">💉 Insulina rápida há ${tempoDesde(rap.t)}</b>
-          Você aplicou ${rap.u} unidades às ${hora(rap.t)}. Ela ainda está agindo: <b>correndo, a glicose pode cair mais rápido</b>.
+          Você aplicou ${rap.u} unidades às ${hora(rap.t)}. Ela ainda está agindo: <b>com o exercício, a glicose pode cair mais rápido</b>.
           Leve açúcar extra e, se possível, espere mais um pouco ou coma um lanche antes.
-          ${rap.local === 'Coxa' ? '<br><b>Foi na coxa:</b> com a perna em movimento ela age ainda mais rápido.' : ''}
-          <br><span class="muted">Pergunte ao médico se deve reduzir a dose nos dias de corrida.</span></div>`
+          ${rap.local === 'Coxa' ? '<br><b>Foi na coxa:</b> se for usar as pernas, ela age ainda mais rápido.' : ''}
+          <br><span class="muted">Pergunte ao médico se deve reduzir a dose nos dias de exercício.</span></div>`
       : '';
 
-    let html = `<h1>Antes de correr</h1>${avisoIns}
+    let html = `<h1>${e.icone} Antes de ${e.verbo}</h1>
+      <p class="muted" style="margin:-8px 0 12px">${e.dica} <button class="mini" id="trocarEx">trocar exercício</button></p>${avisoIns}
       <div class="card"><h2>1. Meça a glicose</h2>
         <input id="glAntes" class="grande" type="number" inputmode="numeric" placeholder="mg/dL" value="${antes || ''}">
         <button id="conferir">Conferir</button>`;
@@ -404,7 +427,7 @@ function telaCorrida(){
         !ver ? 'Meça a glicose primeiro'
         : !podeCorrer ? 'Ainda não dá pra sair'
         : !todos ? 'Marque todo o checklist'
-        : (r?.soCaminhar && !r?.cetonasOk ? 'Começar caminhada' : 'Começar corrida')}</button>
+        : (r?.soCaminhar && !r?.cetonasOk ? 'Começar caminhada' : `Começar ${r.ex === 'Academia' ? 'treino' : 'corrida'}`)}</button>
       ${r ? '<button class="sec" id="cancelar">Hoje não vou</button>' : ''}`;
     return html;
   }
@@ -422,7 +445,7 @@ function telaCorrida(){
   }
 
   if(r.etapa === 'correndo'){
-    return `<h1>${r.soCaminhar ? 'Caminhando' : 'Correndo'} 🏃</h1>
+    return `<h1>${r.soCaminhar ? 'Caminhando 🚶' : e.fazendo + ' ' + e.icone}</h1>
       <div class="card" style="text-align:center">
         <div class="timer" data-desde="${r.inicio}">${mmss(agora() - r.inicio)}</div>
         <button id="terminei">Terminei</button>
@@ -436,14 +459,14 @@ function telaCorrida(){
     const medirEm = r.fim + c.esperaDepois * 60000;
     const falta = medirEm - agora();
     return `<h1>Muito bem! 🎉</h1>
-      <div class="card"><p>Você ${r.soCaminhar ? 'caminhou' : 'correu'} por <b>${duracao(r.fim - r.inicio)}</b>.</p>
-        <label for="km">Distância (km) — opcional</label>
-        <input id="km" type="number" inputmode="decimal" step="0.1" value="${r.km ?? ''}">
+      <div class="card"><p>Você ${r.soCaminhar ? 'caminhou' : e.fez} por <b>${duracao(r.fim - r.inicio)}</b>.</p>
+        ${e.km ? `<label for="km">Distância (km) — opcional</label>
+        <input id="km" type="number" inputmode="decimal" step="0.1" value="${r.km ?? ''}">` : ''}
       </div>
       <div class="card"><h2>Meça a glicose de novo</h2>
         ${falta > 0 ? `<p>O ideal é medir daqui a</p><div class="timer" data-conta="${medirEm}">${mmss(falta)}</div>` : '<p><b>Já pode medir.</b></p>'}
         <input id="glDepois" class="grande" type="number" inputmode="numeric" placeholder="mg/dL">
-        <button id="salvarDepois">Salvar corrida</button>
+        <button id="salvarDepois">Salvar</button>
       </div>`;
   }
 
@@ -453,7 +476,7 @@ function telaCorrida(){
     let ver = ult.depois ? vereditoGeral(ult.depois) : null;
     if(ver && ult.depois >= c.hipo && ult.depois < c.baixo)
       ver = { ...ver, texto: 'Coma um lanche agora (uma fruta ou um pão) e meça de novo em 1 hora.' };
-    return `<h1>Corrida salva ✅</h1>
+    return `<h1>${exDe(ult).salvo} ✅</h1>
       <div class="card">
         <p>Glicose: <b>${ult.antes ?? '—'}</b> antes → <b class="t-${cor(ult.depois)}">${ult.depois}</b> depois.</p>
         ${queda !== null ? `<p>${queda >= 0 ? 'Caiu' : 'Subiu'} <b>${Math.abs(queda)}</b> mg/dL.</p>` : ''}
@@ -479,14 +502,20 @@ function telaHistorico(){
   const na = ult30.filter((g) => g.v >= c.hipo && g.v <= c.alto).length;
 
   let html = `<h1>Histórico</h1><div class="card"><h2>Resumo</h2>`;
-  if(media !== null) html += `<p>Em média, sua glicose <b>${media >= 0 ? 'cai' : 'sobe'} ${Math.abs(media)} mg/dL</b> depois de correr (${comAmbos.length} corrida${comAmbos.length > 1 ? 's' : ''}).</p>`;
+  Object.keys(EX).forEach((k) => {
+    const l = comAmbos.filter((r) => (r.ex || 'Corrida') === k);
+    if(!l.length) return;
+    const m = Math.round(l.reduce((s, r) => s + (r.antes - r.depois), 0) / l.length);
+    html += `<p>${EX[k].icone} <b>${k}:</b> em média a glicose <b>${m >= 0 ? 'cai' : 'sobe'} ${Math.abs(m)} mg/dL</b> (${l.length} vez${l.length > 1 ? 'es' : ''}).</p>`;
+  });
   if(ult30.length) html += `<p>Últimos 30 dias: <b>${Math.round(na / ult30.length * 100)}%</b> das medidas entre ${c.hipo} e ${c.alto}. Média <b>${Math.round(ult30.reduce((s, g) => s + g.v, 0) / ult30.length)}</b>.</p>`;
   if(!ult30.length && media === null) html += `<p class="muted">Ainda não tem registros. Eles vão aparecendo aqui.</p>`;
   html += `<button class="sec" id="relatorio">Enviar resumo pro médico</button></div>`;
 
   if(D.corridas.length){
-    html += `<div class="card"><h2>Corridas</h2><ul class="lista">` +
+    html += `<div class="card"><h2>Exercícios</h2><ul class="lista">` +
       D.corridas.slice(-20).reverse().map((r) => `<li>
+        <span style="font-size:1.6rem">${exDe(r).icone}</span>
         <div class="info"><b>${dia(r.inicio)}</b> às ${hora(r.inicio)} · ${duracao((r.fim || r.inicio) - r.inicio)}${r.km ? ' · ' + esc(r.km) + ' km' : ''}${r.caminhada ? ' · caminhada' : ''}<br>
         <span class="muted">Glicose ${r.antes ?? '—'} → ${r.depois ?? '—'}</span></div></li>`).join('') + `</ul></div>`;
   }
@@ -525,7 +554,7 @@ function telaAjustes(){
   </div>
 
   <div class="card"><h2>Horários e lembretes</h2>
-    <div class="linha"><div>${campo('horaCorrida', 'Corrida', 'time')}</div><div>${campo('horaDormir', 'Dormir', 'time')}</div></div>
+    <div class="linha"><div>${campo('horaCorrida', 'Exercício', 'time')}</div><div>${campo('horaDormir', 'Dormir', 'time')}</div></div>
     <p class="muted" style="margin-top:12px">O celular só avisa com o app fechado se os lembretes estiverem na agenda. Toque abaixo uma vez (e de novo se mudar os horários):</p>
     <button id="ics">📅 Colocar lembretes na agenda do iPhone</button>
     ${permNotif === 'default' ? '<button class="sec" id="notif">🔔 Permitir avisos do app</button>' : ''}
@@ -540,10 +569,10 @@ function telaAjustes(){
   <div class="card"><h2>Faixas de glicose (mg/dL)</h2>
     <div class="aviso amarelo">⚠️ Estes números são padrões gerais. <b>Confirme com o médico</b> e ajuste aqui.</div>
     <div class="linha"><div>${campo('hipo', 'Baixa (hipo) abaixo de', 'number', 'inputmode="numeric"')}</div>
-      <div>${campo('baixo', 'Comer antes de correr abaixo de', 'number', 'inputmode="numeric"')}</div></div>
+      <div>${campo('baixo', 'Comer antes do exercício abaixo de', 'number', 'inputmode="numeric"')}</div></div>
     <div class="linha"><div>${campo('alto', 'Alta acima de', 'number', 'inputmode="numeric"')}</div>
-      <div>${campo('muitoAlto', 'Não correr acima de', 'number', 'inputmode="numeric"')}</div></div>
-    ${campo('esperaDepois', 'Medir quantos minutos depois de correr', 'number', 'inputmode="numeric"')}
+      <div>${campo('muitoAlto', 'Sem exercício acima de', 'number', 'inputmode="numeric"')}</div></div>
+    ${campo('esperaDepois', 'Medir quantos minutos depois do exercício', 'number', 'inputmode="numeric"')}
   </div>
 
   <div class="card"><h2>Ficha de emergência</h2>
@@ -599,9 +628,9 @@ function telaHipo(){
    RENDER E EVENTOS
    ========================================================= */
 function render(){
-  const telas = { inicio: telaInicio, corrida: telaCorrida, historico: telaHistorico, ajustes: telaAjustes };
+  const telas = { inicio: telaInicio, exercicio: telaCorrida, historico: telaHistorico, ajustes: telaAjustes };
   $('#app').innerHTML = telas[aba]();
-  const abas = [['inicio','🏠','Início'], ['corrida','🏃','Corrida'], ['historico','📊','Histórico'], ['ajustes','⚙️','Ajustes']];
+  const abas = [['inicio','🏠','Início'], ['exercicio','💪','Exercício'], ['historico','📊','Histórico'], ['ajustes','⚙️','Ajustes']];
   $('#nav').innerHTML = abas.map(([k, i, t]) => `<button class="${aba === k ? 'on' : ''}" data-aba="${k}"><span>${i}</span>${t}</button>`).join('');
   $('#sobre').innerHTML = sobre ? `<div class="sobre">${sobre === 'ficha' ? telaFicha() : telaHipo()}</div>` : '';
 }
@@ -612,6 +641,7 @@ document.addEventListener('click', (e) => {
   const d = el.dataset;
 
   if(d.aba){ aba = d.aba; render(); scrollTo(0, 0); return; }
+  if(d.ex){ D.run = { ex: d.ex, etapa: 'antes', checks: {} }; salvar(); render(); scrollTo(0, 0); return; }
   if(d.sobre){
     if(d.sobre === 'hipo' && hipoAte && hipoAte < agora()) hipoAte = null;
     sobre = d.sobre; render(); return;
@@ -656,8 +686,8 @@ document.addEventListener('click', (e) => {
     }
     case 'conferir': {
       const v = numero('#glAntes'); if(!v) return;
-      D.run = { ...(D.run || { checks: {} }), etapa: 'antes', antes: v, cetonasOk: false, soCaminhar: false };
-      registrar(v, 'Antes da corrida');
+      D.run = { ...D.run, etapa: 'antes', antes: v, cetonasOk: false, soCaminhar: false };
+      registrar(v, exDe(D.run).antes);
       render(); return;
     }
     case 'esperar': case 'hipoTimer': {
@@ -666,6 +696,7 @@ document.addEventListener('click', (e) => {
       else { D.run.etapa = 'esperando'; D.run.esperaAte = ate; salvar(); }
       render(); return;
     }
+    case 'trocarEx': D.run = null; salvar(); render(); return;
     case 'remedir': D.run.etapa = 'antes'; D.run.antes = null; salvar(); render(); return;
     case 'medirDeNovo': D.run.antes = null; salvar(); render(); return;
     case 'comecar':
@@ -677,13 +708,13 @@ document.addEventListener('click', (e) => {
     case 'salvarDepois': {
       const v = numero('#glDepois'); if(!v) return;
       const r = D.run;
-      const km = parseFloat(($('#km').value || '').replace(',', '.'));
-      D.corridas.push({ inicio: r.inicio, fim: r.fim, antes: r.antes || null, depois: v, km: km > 0 ? km : null, caminhada: !!r.soCaminhar && !r.cetonasOk });
-      registrar(v, 'Depois da corrida');
-      D.run = { etapa: 'fim' }; salvar(); render(); scrollTo(0, 0); return;
+      const km = parseFloat(($('#km')?.value || '').replace(',', '.'));
+      D.corridas.push({ ex: r.ex, inicio: r.inicio, fim: r.fim, antes: r.antes || null, depois: v, km: km > 0 ? km : null, caminhada: !!r.soCaminhar && !r.cetonasOk });
+      registrar(v, exDe(r).depois);
+      D.run = { etapa: 'fim', ex: r.ex }; salvar(); render(); scrollTo(0, 0); return;
     }
     case 'fechar': D.run = null; salvar(); aba = 'inicio'; render(); return;
-    case 'socorro': pedirAjuda(D.run?.etapa === 'correndo' ? 'estou passando mal durante a corrida' : 'estou com a glicose baixa / passando mal'); return;
+    case 'socorro': pedirAjuda(D.run?.etapa === 'correndo' ? 'estou passando mal ' + exDe(D.run).durante : 'estou com a glicose baixa / passando mal'); return;
     case 'ics': baixarIcs(); return;
     case 'notif': Notification.requestPermission().then(render); return;
     case 'relatorio': compartilharResumo(); return;
@@ -694,7 +725,6 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => {
   const el = e.target;
   if(el.dataset.check){
-    D.run = D.run || { etapa: 'antes', checks: {} };
     D.run.checks[el.dataset.check] = el.checked; salvar(); render(); return;
   }
   if(el.id === 'cetonas'){ D.run.cetonasOk = el.checked; salvar(); render(); return; }
@@ -725,7 +755,10 @@ function compartilharResumo(){
   }
   if(r.length){
     const ab = r.filter((x) => x.antes && x.depois);
-    t += `Corridas: ${r.length}` + (ab.length ? ` · queda média ${Math.round(ab.reduce((s, x) => s + x.antes - x.depois, 0) / ab.length)} mg/dL` : '') + '\n';
+    Object.keys(EX).forEach((k) => {
+      const l = r.filter((x) => (x.ex || 'Corrida') === k), ab2 = l.filter((x) => x.antes && x.depois);
+      if(l.length) t += `${k}: ${l.length}x` + (ab2.length ? ` · queda média ${Math.round(ab2.reduce((s, x) => s + x.antes - x.depois, 0) / ab2.length)} mg/dL` : '') + '\n';
+    });
   }
   const ins = D.insulinas.filter((x) => x.t > agora() - 30 * 864e5);
   if(ins.length){
@@ -770,7 +803,7 @@ setInterval(() => {
 }, 1000);
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-if(D.run && D.run.etapa !== 'fim') aba = 'corrida';
+if(D.run && D.run.etapa !== 'fim') aba = 'exercicio';
 render();
 </script>
 </body>
