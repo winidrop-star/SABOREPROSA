@@ -379,9 +379,11 @@ function renderTabPedidoNovo() {
     '<div class="section-label">Ou monte manualmente</div>' +
     '<div class="tabs" id="menu-cat-tabs"></div>' +
     '<div id="menu-list"></div>' +
-    '<div class="section-label">Itens do pedido</div>' +
+    '<div class="form-panel">' +
+    '<div class="section-label" style="margin-top:0;">Itens do pedido</div>' +
     '<div id="draft-cart-list"></div>' +
     '<div class="cart-total-row"><span>Total</span><span class="mono">' + fmtBRL(draftCartTotal()) + '</span></div>' +
+    '</div>' +
     '<div class="field"><label for="cx-cliente">Cliente</label><input id="cx-cliente" type="text" placeholder="Nome do cliente"></div>' +
     '<div class="field"><label for="cx-telefone">Telefone (opcional)</label><input id="cx-telefone" type="tel" placeholder="(65) 99999-9999"></div>' +
     '<div class="field"><label>Entrega</label><div class="chip-group" id="cx-modo-group">' +
