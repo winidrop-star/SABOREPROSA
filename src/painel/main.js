@@ -28,6 +28,7 @@ let caixaTab = 'pedido'; // pedido | pedidos | caixa | relatorios | cardapio
 let pedidosFiltro = 'ativos';
 let caixaPeriodo = 'hoje';
 let relatoriosPeriodo = 'hoje';
+let relatoriosDataEspecifica = '';
 
 let activeCategory = null;
 let draftCart = {};
@@ -1084,24 +1085,48 @@ async function publicarCardapioDia() {
 }
 
 /* ---------------- ABA: Relatórios ---------------- */
+function categoriaDoItemPorNome(nome) {
+  for (const cat of STATE.categorias) {
+    if (cat.itens.some((i) => i.nome === nome)) return cat.id;
+  }
+  return null;
+}
+
+function pedidoNoPeriodoRelatorio(o) {
+  const ts = o.concluidoEm || o.criadoEm;
+  if (relatoriosPeriodo === 'data') {
+    if (!relatoriosDataEspecifica) return false;
+    const d = new Date(ts);
+    const [y, m, dd] = relatoriosDataEspecifica.split('-').map(Number);
+    return d.getFullYear() === y && d.getMonth() + 1 === m && d.getDate() === dd;
+  }
+  return inPeriodo(ts, relatoriosPeriodo);
+}
+
 function renderTabRelatorios() {
   const wrap = document.getElementById('caixa-body');
-  const pedidosPeriodo = allPedidos.filter((o) => o.status === 'concluido' && inPeriodo(o.concluidoEm || o.criadoEm, relatoriosPeriodo));
+  const pedidosPeriodo = allPedidos.filter((o) => o.status === 'concluido' && pedidoNoPeriodoRelatorio(o));
   const faturamento = pedidosPeriodo.reduce((s, o) => s + (o.total || 0), 0);
   const qtdPedidos = pedidosPeriodo.length;
   const ticketMedio = qtdPedidos ? faturamento / qtdPedidos : 0;
 
-  const ranking = {};
+  // vendas por categoria (sem limite), pra "quantas marmitas saíram e quais"
+  const porCategoria = {};
   pedidosPeriodo.forEach((o) => {
     o.itens.forEach((i) => {
+      const catId = categoriaDoItemPorNome(i.nome) || '_outros';
+      if (!porCategoria[catId]) porCategoria[catId] = {};
       const nome = i.nome + (i.variante ? ' (' + i.variante + ')' : '');
-      ranking[nome] = (ranking[nome] || 0) + i.qtde;
+      porCategoria[catId][nome] = (porCategoria[catId][nome] || 0) + i.qtde;
     });
   });
-  const rankingArr = Object.keys(ranking)
-    .map((k) => ({ nome: k, qtd: ranking[k] }))
-    .sort((a, b) => b.qtd - a.qtd)
-    .slice(0, 8);
+  const categoriasComVenda = STATE.categorias
+    .map((c) => ({ id: c.id, nome: c.nome }))
+    .concat(porCategoria._outros ? [{ id: '_outros', nome: 'Outros' }] : []);
+  const totalMarmitas = Object.values(porCategoria.marmitas || {}).reduce((s, q) => s + q, 0);
+  const marmitasArr = Object.keys(porCategoria.marmitas || {})
+    .map((k) => ({ nome: k, qtd: porCategoria.marmitas[k] }))
+    .sort((a, b) => b.qtd - a.qtd);
 
   const porPagamento = {};
   pedidosPeriodo.forEach((o) => {
@@ -1123,37 +1148,72 @@ function renderTabRelatorios() {
 
   wrap.innerHTML =
     '<div class="subtabs" id="periodo-tabs-rel"></div>' +
+    '<div id="data-especifica-wrap"></div>' +
     '<div class="stat-grid">' +
     '<div class="stat-tile"><div class="label">Faturamento</div><div class="value">' + fmtBRL(faturamento) + '</div></div>' +
     '<div class="stat-tile"><div class="label">Pedidos</div><div class="value">' + qtdPedidos + '</div></div>' +
     '<div class="stat-tile"><div class="label">Ticket médio</div><div class="value">' + fmtBRL(ticketMedio) + '</div></div>' +
     '</div>' +
-    '<div class="section-label">Mais vendidos</div>' +
-    '<div id="ranking-list"></div>' +
-    '<div class="section-label">Por forma de pagamento</div>' +
+    '<div class="form-panel">' +
+    '<div class="section-label" style="margin-top:0;">Resumo de produção — Marmitas</div>' +
+    '<div class="stat-grid" style="grid-template-columns:1fr;margin-bottom:10px;">' +
+    '<div class="stat-tile"><div class="label">Total de marmitas vendidas</div><div class="value">' + totalMarmitas + '</div></div>' +
+    '</div>' +
+    '<div id="producao-marmitas-list"></div>' +
+    '</div>' +
+    '<div id="vendas-por-categoria"></div>' +
+    '<div class="form-panel">' +
+    '<div class="section-label" style="margin-top:0;">Por forma de pagamento</div>' +
     '<div id="pagamento-list"></div>' +
-    '<div class="section-label">Retirada x Entrega</div>' +
+    '</div>' +
+    '<div class="form-panel">' +
+    '<div class="section-label" style="margin-top:0;">Retirada x Entrega</div>' +
     '<div id="modo-list"></div>' +
-    '<div class="section-label">Pedidos do período (' + qtdPedidos + ')</div>' +
-    '<div id="pedidos-periodo-list"></div>';
+    '</div>' +
+    '<div class="form-panel">' +
+    '<div class="section-label" style="margin-top:0;">Pedidos do período (' + qtdPedidos + ')</div>' +
+    '<div id="pedidos-periodo-list"></div>' +
+    '</div>';
 
-  wirePeriodoTabs('periodo-tabs-rel', relatoriosPeriodo, (p) => {
-    relatoriosPeriodo = p;
-    renderTabRelatorios();
-  });
+  renderPeriodoTabsRelatorios();
 
-  const rankWrap = document.getElementById('ranking-list');
-  if (rankingArr.length === 0) {
-    rankWrap.innerHTML = '<div class="empty-state">Sem pedidos concluídos nesse período ainda.</div>';
+  const producaoWrap = document.getElementById('producao-marmitas-list');
+  if (marmitasArr.length === 0) {
+    producaoWrap.innerHTML = '<div class="empty-state">Nenhuma marmita vendida nesse período.</div>';
   } else {
-    rankWrap.innerHTML = '';
-    rankingArr.forEach((r) => {
+    producaoWrap.innerHTML = '';
+    marmitasArr.forEach((r) => {
       const row = document.createElement('div');
       row.className = 'rank-row';
       row.innerHTML = '<span class="rank-name">' + r.nome + '</span><span class="rank-qtd">' + r.qtd + 'x</span>';
-      rankWrap.appendChild(row);
+      producaoWrap.appendChild(row);
     });
   }
+
+  const catsWrap = document.getElementById('vendas-por-categoria');
+  catsWrap.innerHTML = '';
+  categoriasComVenda.forEach((cat) => {
+    const itensCat = porCategoria[cat.id];
+    if (!itensCat) return;
+    const arr = Object.keys(itensCat)
+      .map((k) => ({ nome: k, qtd: itensCat[k] }))
+      .sort((a, b) => b.qtd - a.qtd);
+    if (arr.length === 0) return;
+    const panel = document.createElement('div');
+    panel.className = 'form-panel';
+    const title = document.createElement('div');
+    title.className = 'section-label';
+    title.style.marginTop = '0';
+    title.textContent = 'Vendas — ' + cat.nome;
+    panel.appendChild(title);
+    arr.forEach((r) => {
+      const row = document.createElement('div');
+      row.className = 'rank-row';
+      row.innerHTML = '<span class="rank-name">' + r.nome + '</span><span class="rank-qtd">' + r.qtd + 'x</span>';
+      panel.appendChild(row);
+    });
+    catsWrap.appendChild(panel);
+  });
 
   const pagWrap = document.getElementById('pagamento-list');
   if (pagamentoArr.length === 0) {
@@ -1206,6 +1266,44 @@ function renderTabRelatorios() {
           '<div class="mov-valor pos">' + fmtBRL(o.total || 0) + '</div>';
         listaWrap.appendChild(row);
       });
+  }
+}
+
+function renderPeriodoTabsRelatorios() {
+  const el = document.getElementById('periodo-tabs-rel');
+  el.innerHTML = '';
+  [
+    { id: 'hoje', label: 'Hoje' },
+    { id: '7dias', label: '7 dias' },
+    { id: '30dias', label: '30 dias' },
+    { id: 'data', label: 'Data específica' }
+  ].forEach((p) => {
+    const btn = document.createElement('button');
+    btn.className = 'subtab-btn' + (p.id === relatoriosPeriodo ? ' active' : '');
+    btn.textContent = p.label;
+    btn.addEventListener('click', () => {
+      relatoriosPeriodo = p.id;
+      if (p.id === 'data' && !relatoriosDataEspecifica) {
+        relatoriosDataEspecifica = new Date().toISOString().slice(0, 10);
+      }
+      renderTabRelatorios();
+    });
+    el.appendChild(btn);
+  });
+
+  const dateWrap = document.getElementById('data-especifica-wrap');
+  if (relatoriosPeriodo === 'data') {
+    dateWrap.innerHTML =
+      '<div class="field" style="margin-top:0;margin-bottom:14px;max-width:220px;"><label for="rel-data-especifica">Escolha o dia</label><input id="rel-data-especifica" type="date"></div>';
+    const input = document.getElementById('rel-data-especifica');
+    input.max = new Date().toISOString().slice(0, 10);
+    input.value = relatoriosDataEspecifica;
+    input.addEventListener('change', (e) => {
+      relatoriosDataEspecifica = e.target.value;
+      renderTabRelatorios();
+    });
+  } else {
+    dateWrap.innerHTML = '';
   }
 }
 
