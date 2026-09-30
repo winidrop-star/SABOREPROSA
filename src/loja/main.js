@@ -514,19 +514,10 @@ function openCartDrawer() {
   overlay.className = 'drawer-overlay';
   overlay.id = 'cart-overlay';
 
-  const linesHtml = cartArray()
-    .map(
-      (i) =>
-        '<div class="cart-line"><div><div class="ci-name">' + i.qty + 'x ' + i.name + '</div>' +
-        (i.variant ? '<div class="ci-variant">' + i.variant + '</div>' : '') + '</div>' +
-        '<span class="price">' + fmtBRL(i.qty * i.unitPrice) + '</span></div>'
-    )
-    .join('');
-
   overlay.innerHTML =
     '<div class="drawer">' +
     '<h2>Sua sacola</h2>' +
-    '<div id="cart-lines">' + linesHtml + '</div>' +
+    '<div id="cart-lines"></div>' +
     '<div class="field"><label for="ck-cupom">Cupom de desconto (opcional)</label>' +
     '<div style="display:flex;gap:8px;">' +
     '<input id="ck-cupom" type="text" placeholder="CÓDIGO" style="flex:1;text-transform:uppercase;">' +
@@ -596,6 +587,41 @@ function openCartDrawer() {
   function finalTotal() {
     return cartTotal() - (appliedCupom ? appliedCupom.desconto : 0);
   }
+  function renderCartLinesBlock() {
+    if (cartCount() === 0) {
+      overlay.remove();
+      renderMenu();
+      renderCartBar();
+      return;
+    }
+    const linesEl = document.getElementById('cart-lines');
+    if (!linesEl) return;
+    linesEl.innerHTML = Object.keys(cart)
+      .map((key) => {
+        const i = cart[key];
+        return (
+          '<div class="cart-line"><div><div class="ci-name">' + i.qty + 'x ' + i.name + '</div>' +
+          (i.variant ? '<div class="ci-variant">' + i.variant + '</div>' : '') + '</div>' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<span class="price">' + fmtBRL(i.qty * i.unitPrice) + '</span>' +
+          '<button type="button" class="icon-btn danger" data-remove-key="' + key + '" title="Remover item">✕</button>' +
+          '</div></div>'
+        );
+      })
+      .join('');
+    linesEl.querySelectorAll('[data-remove-key]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        delete cart[btn.getAttribute('data-remove-key')];
+        saveCart();
+        renderMenu();
+        renderCartBar();
+        renderCartLinesBlock();
+        renderTotalsBlock();
+        syncCheckoutHref();
+      });
+    });
+  }
+  renderCartLinesBlock();
   function renderTotalsBlock() {
     const block = document.getElementById('totals-block');
     if (!block) return;

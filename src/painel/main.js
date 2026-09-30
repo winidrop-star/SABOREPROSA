@@ -379,6 +379,8 @@ function renderTabPedidoNovo() {
     '<div class="section-label">Ou monte manualmente</div>' +
     '<div class="tabs" id="menu-cat-tabs"></div>' +
     '<div id="menu-list"></div>' +
+    '<div class="section-label">Itens do pedido</div>' +
+    '<div id="draft-cart-list"></div>' +
     '<div class="cart-total-row"><span>Total</span><span class="mono">' + fmtBRL(draftCartTotal()) + '</span></div>' +
     '<div class="field"><label for="cx-cliente">Cliente</label><input id="cx-cliente" type="text" placeholder="Nome do cliente"></div>' +
     '<div class="field"><label for="cx-telefone">Telefone (opcional)</label><input id="cx-telefone" type="tel" placeholder="(65) 99999-9999"></div>' +
@@ -394,6 +396,34 @@ function renderTabPedidoNovo() {
     '</div></div>' +
     '<div class="field"><label for="cx-obs">Observação</label><textarea id="cx-obs" placeholder="Ex: sem cebola..."></textarea></div>' +
     '<button class="btn-primary" id="btn-enviar" disabled>Enviar pra cozinha</button>';
+
+  const draftCartListEl = document.getElementById('draft-cart-list');
+  const draftKeys = Object.keys(draftCart);
+  if (draftKeys.length === 0) {
+    draftCartListEl.innerHTML = '<div class="empty-cart">Nenhum item adicionado ainda.</div>';
+  } else {
+    draftCartListEl.innerHTML = '';
+    draftKeys.forEach((key) => {
+      const i = draftCart[key];
+      const row = document.createElement('div');
+      row.className = 'cart-line';
+      row.innerHTML =
+        '<div><div class="ci-name">' + i.qty + 'x ' + i.name + '</div>' +
+        (i.variant ? '<div class="ci-variant">' + i.variant + '</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<span class="price">' + fmtBRL(i.qty * i.unitPrice) + '</span>' +
+        '<button type="button" class="icon-btn danger" data-remove-key="' + key + '" title="Remover item">✕</button>' +
+        '</div>';
+      draftCartListEl.appendChild(row);
+    });
+    draftCartListEl.querySelectorAll('[data-remove-key]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        delete draftCart[btn.getAttribute('data-remove-key')];
+        renderTabPedidoNovo();
+      });
+    });
+  }
 
   const catTabs = document.getElementById('menu-cat-tabs');
   STATE.categorias.forEach((cat) => {
