@@ -92,7 +92,7 @@ function buildVariantLabel(variant, escolheProteina, cd, st) {
   if (st.feijao) parts.push(st.feijao);
   if (st.legume) parts.push(st.legume);
   const extras = Object.keys(st.adicionais).filter((k) => st.adicionais[k]);
-  if (extras.length) parts.push('+ ' + extras.join(', '));
+  if (extras.length) parts.push((extras.length > 1 ? 'Adicionais: ' : 'Adicional: ') + extras.join(', '));
   return parts.join(', ');
 }
 function renderConfigRow(cat, item, variant) {
