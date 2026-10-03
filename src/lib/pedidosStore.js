@@ -122,3 +122,23 @@ export function subscribeMovimentos(onChange) {
     .subscribe();
   return () => supabase.removeChannel(channel);
 }
+
+// Aviso rápido ("Pedido do Aiqfome pronto") que não fica salvo em lugar
+// nenhum — só atravessa na hora pros outros aparelhos conectados ao painel.
+let aiqfomeChannel = null;
+
+export function initAiqfomeChannel(onAviso) {
+  aiqfomeChannel = supabase
+    .channel('aiqfome-avisos')
+    .on('broadcast', { event: 'pronto' }, () => onAviso())
+    .subscribe();
+  return () => {
+    supabase.removeChannel(aiqfomeChannel);
+    aiqfomeChannel = null;
+  };
+}
+
+export function enviarAvisoAiqfomePronto() {
+  if (!aiqfomeChannel) return;
+  aiqfomeChannel.send({ type: 'broadcast', event: 'pronto', payload: {} });
+}

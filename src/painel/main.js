@@ -9,7 +9,9 @@ import {
   atualizarStatusPedido,
   inserirMovimento,
   subscribePedidos,
-  subscribeMovimentos
+  subscribeMovimentos,
+  initAiqfomeChannel,
+  enviarAvisoAiqfomePronto
 } from '../lib/pedidosStore.js';
 
 const CAIXA_PIN = import.meta.env.VITE_CAIXA_PIN || '2707';
@@ -1331,6 +1333,7 @@ function renderCozinha() {
   wireTopbar();
   document.getElementById('btn-aiqfome-pronto').addEventListener('click', () => {
     playAiqfomePronto();
+    enviarAvisoAiqfomePronto();
   });
   renderListaCozinha();
 }
@@ -1430,6 +1433,10 @@ async function init() {
       allMovimentos = await fetchMovimentos();
     } catch (e) {}
     render();
+  });
+
+  initAiqfomeChannel(() => {
+    if (role === 'caixa') playAiqfomePronto();
   });
 }
 
