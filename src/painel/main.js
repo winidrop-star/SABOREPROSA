@@ -1,7 +1,7 @@
 import { fmtBRL, fmtHora, fmtDataHora, inPeriodo } from '../lib/format.js';
 import { loadState, saveState } from '../lib/config.js';
 import { baixarComandaPdf } from '../lib/pdfComanda.js';
-import { unlockAudio, playReadyChime, playNovoPedidoAlerta } from '../lib/audio.js';
+import { unlockAudio, playReadyChime, playNovoPedidoAlerta, playAiqfomePronto } from '../lib/audio.js';
 import {
   fetchPedidos,
   fetchMovimentos,
@@ -1324,8 +1324,14 @@ function wirePeriodoTabs(elId, current, onChange) {
 
 /* ================= COZINHA ================= */
 function renderCozinha() {
-  app.innerHTML = topbarHtml('Cozinha') + '<div id="lista-cozinha"></div>';
+  app.innerHTML =
+    topbarHtml('Cozinha') +
+    '<button type="button" class="btn-primary" id="btn-aiqfome-pronto" style="margin-bottom:16px;">🔔 Pedido do Aiqfome pronto</button>' +
+    '<div id="lista-cozinha"></div>';
   wireTopbar();
+  document.getElementById('btn-aiqfome-pronto').addEventListener('click', () => {
+    playAiqfomePronto();
+  });
   renderListaCozinha();
 }
 

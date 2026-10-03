@@ -84,3 +84,16 @@ export function playNovoPedidoAlerta() {
   falar('Tem marmita, confirme para iniciar o preparo.');
   notificarDesktop('Novo pedido!', 'Chegou um pedido de marmita pra cozinha.');
 }
+
+export function playAiqfomePronto() {
+  try {
+    unlockAudio();
+    if (audioCtx) {
+      const now = audioCtx.currentTime;
+      beep(784, now, 0.18);
+      beep(1047, now + 0.2, 0.28);
+    }
+  } catch (e) {}
+  falar('Pedido do Aiqfome está pronto!');
+  notificarDesktop('Pedido pronto!', 'O pedido do Aiqfome está pronto pro motoboy.');
+}
