@@ -1331,9 +1331,16 @@ function renderCozinha() {
     '<button type="button" class="btn-primary" id="btn-aiqfome-pronto" style="margin-bottom:16px;">🔔 Pedido do Aiqfome pronto</button>' +
     '<div id="lista-cozinha"></div>';
   wireTopbar();
-  document.getElementById('btn-aiqfome-pronto').addEventListener('click', () => {
-    playAiqfomePronto();
+  document.getElementById('btn-aiqfome-pronto').addEventListener('click', (e) => {
     enviarAvisoAiqfomePronto();
+    const btn = e.currentTarget;
+    const textoOriginal = btn.textContent;
+    btn.textContent = '✓ Caixa avisado!';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+    }, 2000);
   });
   renderListaCozinha();
 }
